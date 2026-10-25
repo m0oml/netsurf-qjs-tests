@@ -5,6 +5,11 @@ engine and the CSS work (grid, flex, `@supports`, `transform`, custom
 properties, `CSS.supports()` and more) for NetSurf, including its RISC OS
 frontend.
 
+**LLM-assisted:** this tooling, and the code it tests, was written with the
+help of an AI coding assistant (Claude, from Anthropic), directed, reviewed
+and tested by the author.  Commits carry a `Co-Authored-By` trailer naming
+the model.
+
 The code under test is in these branches:
 
 - <https://github.com/m0oml/netsurf> branch `quickjs-engine`
