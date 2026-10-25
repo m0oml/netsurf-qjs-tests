@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><title>style visual</title><style>
+body { font-size: 22px; margin: 20px }
+#box { background: #ccc; padding: 8px; border: 2px solid black }
+.marker { position: absolute; border: 2px solid blue }
+</style></head><body>
+<div id="box">box: grey initially</div>
+<p id="p">paragraph <span id="sp">with a span</span> inside</p>
+<div id="gone" style="color:red">THIS SHOULD BE HIDDEN by style.display</div>
+<div id="out">geometry: pending</div>
+<script>
+setTimeout(() => {
+  const box = document.getElementById("box");
+  box.style.backgroundColor = "#8f8";
+  box.style.width = "300px";
+  box.style.setProperty("border-width", "6px");
+  box.textContent = "box: green, 300px wide, 6px border (set via element.style)";
+  document.getElementById("gone").style.display = "none";
+  document.getElementById("sp").style.cssText = "color: white; background: purple; font-weight: bold";
+  const r = box.getBoundingClientRect();
+  const s = document.getElementById("sp").getBoundingClientRect();
+  /* outline the span using its measured rect */
+  const m = document.createElement("div");
+  m.className = "marker";
+  m.style.left = (s.left + scrollX - 4) + "px";
+  m.style.top = (s.top + scrollY - 4) + "px";
+  m.style.width = (s.width + 4) + "px";
+  m.style.height = (s.height + 4) + "px";
+  document.body.append(m);
+  console.log("doc " + document.documentElement.scrollWidth + "x" + document.documentElement.scrollHeight + " body " + document.body.scrollWidth);
+  document.getElementById("out").textContent =
+    "box rect " + r.left + "," + r.top + " " + r.width + "x" + r.height +
+    "; computed bg " + getComputedStyle(box).backgroundColor +
+    "; viewport " + innerWidth + "x" + innerHeight;
+}, 500);
+</script></body></html>

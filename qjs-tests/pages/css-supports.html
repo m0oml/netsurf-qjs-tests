@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><title>CSS.supports</title></head><body>
+<div id="g" style="display: grid; gap: 5px 10px; row-gap: 7px"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+window.addEventListener("load", () => setTimeout(() => {
+  check("property and value", () => CSS.supports("display", "grid") === true);
+  check("unknown value", () => CSS.supports("display", "bogus") === false);
+  check("unknown property", () => CSS.supports("bogus", "grid") === false);
+  check("declaration without brackets", () => CSS.supports("display: flex") === true);
+  check("declaration with brackets", () => CSS.supports("(display: grid)") === true);
+  check("and", () => CSS.supports("(display: grid) and (gap: 1px)") === true);
+  check("and, one unsupported", () => CSS.supports("(display: grid) and (gap: nope)") === false);
+  check("or", () => CSS.supports("(bogus: 1) or (color: red)") === true);
+  check("not", () => CSS.supports("not (display: bogus)") === true);
+  check("selector() is not supported", () => CSS.supports("selector(:has(a))") === false);
+  check("custom properties", () => CSS.supports("--x", "1") === true);
+  check("grid track list", () => CSS.supports("grid-template-columns", "repeat(auto-fill, minmax(10px, 1fr))") === true);
+  check("transform", () => CSS.supports("transform", "translateX(1px)") === true);
+  check("no argument throws", () => { try { CSS.supports(); } catch (e) { return e instanceof TypeError; } return false; });
+  check("computed gap", () => { const s = getComputedStyle(document.getElementById("g")); return (s.rowGap === "7px" && s.columnGap === "10px") || s.rowGap + " " + s.columnGap; });
+  check("normal gap", () => getComputedStyle(document.body).rowGap === "normal" || getComputedStyle(document.body).rowGap);
+  check("style.gap", () => { document.body.style.gap = "3px"; return document.body.style.gap === "3px" || document.body.style.gap; });
+  console.log("DONE");
+}, 200));
+</script></body></html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+.index { text-align: center; }
+#search_view { padding: .5rem .5rem 0; }
+.search_box { white-space: nowrap; width: 100%; max-width: 44rem; border-radius: .8rem; flex-direction: row; display: inline-flex; }
+#q, #send_search { background: none repeat scroll 0 0 #fff; z-index: 100; border: none; outline: none; margin: 0; font-size: 1.1rem; display: block; }
+#q { border-radius: .8rem 0 0 .8rem; width: 100%; padding-left: 1rem; padding-right: 0 !important; }
+#q { flex: 1; width: 100%; }
+#clear_search { box-sizing: border-box; width: 1.8rem; border: none; margin: 0; padding: .8rem .2rem; font-size: 1.1rem; display: block; }
+#send_search { border-radius: 0 .8rem .8rem 0; padding: .8rem; }
+.v2 #q { flex: 1; width: auto; }
+.v3 #q { flex: 1; padding-left: 0; }
+.v4 #q { flex: 1 1 auto; }
+</style></head><body>
+<div class="index"><div id="search_view">
+<div class="search_box" id="box1"><input id="q" type="text"><button id="clear_search" type="reset">x</button><button id="send_search" type="submit">s</button></div>
+</div></div>
+<div class="index v2"><div class="search_box"><input id="q2" type="text" style="flex:1;width:auto"><button>x</button></div></div>
+<div class="index"><div class="search_box"><input id="q3" type="text" style="flex:1"><button>x</button></div></div>
+<div class="index"><div class="search_box"><input id="q4" type="text" style="flex:1 1 0%"><button>x</button></div></div>
+<div class="index"><div class="search_box"><input id="q5" type="text" style="flex:1 1 auto"><button>x</button></div></div>
+<div class="index"><div style="display:flex;width:600px"><input id="q6" type="text" style="flex:1"><button>x</button></div></div>
+<script>
+window.addEventListener("load", () => setTimeout(() => {
+  for (const id of ["box1", "q", "clear_search", "send_search", "q2", "q3", "q4", "q5", "q6"]) {
+    const e = document.getElementById(id), r = e.getBoundingClientRect();
+    console.log(id, Math.round(r.x), Math.round(r.width) + "x" + Math.round(r.height), "parent", Math.round(e.parentNode.getBoundingClientRect().width));
+  }
+  console.log("DONE");
+}, 500));
+</script></body></html>

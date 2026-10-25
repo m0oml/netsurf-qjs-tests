@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>tagName</title></head><body>
+<div id="d"></div><svg id="s"><circle id="c"/></svg>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("div tagName upper", function() { var t = document.getElementById("d").tagName; return t === "DIV" || t; });
+check("body tagName", function() { var t = document.body.tagName; return t === "BODY" || t; });
+check("created element", function() { var t = document.createElement("span").tagName; return t === "SPAN" || t; });
+check("tagName equals nodeName", function() { var d = document.getElementById("d"); return d.tagName === d.nodeName || (d.tagName + "/" + d.nodeName); });
+check("tagName readonly", function() { var d = document.getElementById("d"); d.tagName = "P"; return d.tagName === "DIV" || d.tagName; });
+console.log("DONE");
+</script></body></html>

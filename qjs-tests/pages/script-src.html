@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html><head><title>script elements</title>
+<base href="http://example.test/dir/">
+<script src="x.js?v=1" onerror="void 0"></script>
+</head><body>
+<a id="a" href="x/y.html?q=1#f"></a><img id="i" src="p.png"><iframe id="f" src="/fr.html"></iframe><form id="fo" action="go"></form><a id="n"></a>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const byId = (id) => document.getElementById(id);
+check("script.src is absolute", () => eq(document.getElementsByTagName("script")[0].src, "http://example.test/dir/x.js?v=1"));
+check("anchor.href", () => eq(byId("a").href, "http://example.test/dir/x/y.html?q=1#f"));
+check("anchor parts", () => eq([byId("a").pathname, byId("a").search, byId("a").hash, byId("a").host, byId("a").protocol, byId("a").origin].join(" "), "/dir/x/y.html ?q=1 #f example.test http: http://example.test"));
+check("anchor toString", () => eq(String(byId("a")), "http://example.test/dir/x/y.html?q=1#f"));
+check("img.src", () => eq(byId("i").src, "http://example.test/dir/p.png"));
+check("root relative", () => eq(byId("f").src, "http://example.test/fr.html"));
+check("form action", () => eq(byId("fo").action, "http://example.test/dir/go"));
+check("no attribute", () => eq(byId("n").href, ""));
+check("set href", () => { byId("a").href = "/z"; return eq(byId("a").getAttribute("href") + " " + byId("a").href, "/z http://example.test/z"); });
+check("detached console.error", () => { const e = console.error; e("x"); return true; });
+check("destructured console", () => { const { log, warn } = console; log("y"); warn("z"); return true; });
+check("console.log.call(other)", () => { console.log.call({}, "w"); return true; });
+check("PerformanceObserver", () => { const o = new PerformanceObserver(() => {}); o.observe({ entryTypes: ["resource"] }); o.disconnect(); return Array.isArray(PerformanceObserver.supportedEntryTypes) ? true : "no supportedEntryTypes"; });
+window.addEventListener("load", () => {
+  check("currentScript null after load", () => eq(document.currentScript, null));
+  console.log("DONE");
+});
+</script></body></html>

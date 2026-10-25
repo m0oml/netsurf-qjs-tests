@@ -1,0 +1,5 @@
+<html><body><form id="f"><input type="checkbox" name="u"><input type="submit" name="go" value="Go"></form><script>
+const els = document.getElementById("f").querySelectorAll("input");
+for (const el of els) console.log(`localName=${el.localName} tagName=${el.tagName} type=${el.getAttribute("type")} checked=${el.checked} typeof=${typeof el.checked}`);
+for (const code of [404, 401, 500, 204]) fetch("/api/status/" + code).then(r => console.log("status " + code + " -> " + r.status), e => console.log("status " + code + " rejected " + e));
+</script></body></html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><title>import maps</title>
+<!-- needs net-server.py, which serves the modules -->
+<script type="importmap">
+{ "imports": { "greet": "./modules/lib/greeter.js", "lib/": "./modules/lib/extra/", "plain": "https://unused.invalid/x.js" },
+  "scopes": { "./modules/lib/": { "greet": "./modules/lib/alt.js" } } }
+</script>
+<script type="module">
+import { greeting, shout } from "greet";
+import { deep } from "lib/deep.js";
+import { fromScope } from "./modules/lib/scoped.js";
+window.__results = { greeting, shouted: shout("a"), deep, fromScope };
+</script>
+</head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+window.addEventListener("load", () => {
+  const r = window.__results;
+  check("module ran", () => r !== undefined);
+  check("bare specifier", () => eq(r.greeting, "hello from greeter"));
+  check("exports", () => eq(r.shouted, "A"));
+  check("prefix mapping", () => eq(r.deep, "deep"));
+  check("scope wins inside its path", () => eq(r.fromScope, "alternative greeter via scope"));
+  import("greet").then((m) => {
+    check("dynamic import of bare specifier", () => eq(m.greeting, "hello from greeter"));
+    return import("nothing").then(() => check("unmapped is an error", () => "no error"), () => check("unmapped is an error", () => true));
+  }).then(() => console.log("DONE"));
+});
+</script></body></html>

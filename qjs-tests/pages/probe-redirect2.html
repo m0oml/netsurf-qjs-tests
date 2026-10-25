@@ -1,0 +1,8 @@
+<html><body><script>
+(async () => {
+ for (const [code, m] of [["307","POST"],["303","PUT"]]) {
+  try { const r = await fetch("/api/redirect?code=" + code + "&to=/api/echo", { method: m, body: "x" }); console.log(code + " ok " + (await r.text()).slice(0, 30)); }
+  catch (e) { console.log(code + " err " + e); }
+ }
+})();
+</script></body></html>

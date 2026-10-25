@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html><head><title>wide inline in a narrow box</title><style>
+body { margin: 0; font-size: 16px }
+.ico { width: 24px; height: 24px; display: inline-block; vertical-align: bottom; line-height: 1 }
+.nar { width: 20px; padding: 0 2px; box-sizing: border-box; display: block }
+button.nar { padding: 0 2px; border: 0; margin: 0; background: none }
+.row { display: flex }
+</style></head><body>
+<div class="nar" id="n1"><span id="sp1"><svg id="s1" class="ico" viewBox="0 0 10 10"><rect width="10" height="10"/></svg></span></div>
+<div class="row"><div class="nar" id="n2"><span id="sp2"><svg id="s2" class="ico" viewBox="0 0 10 10"><rect width="10" height="10"/></svg></span></div></div>
+<form action="about:blank"><div class="row"><button class="nar" id="n3" type="button"><span id="sp3"><svg id="s3" class="ico" viewBox="0 0 10 10"><rect width="10" height="10"/></svg></span></button></div></form>
+<div><span id="sp4">a</span><span id="sp5"><svg id="s5" class="ico" viewBox="0 0 10 10"><rect width="10" height="10"/></svg></span><span id="sp6">b</span></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const rect = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => {
+  for (const n of [1, 2, 3]) {
+    check("case " + n + ": icon on the first line", () => eq(Math.round(rect("s" + n).top - rect("n" + n).top) <= 2, true));
+    check("case " + n + ": no empty line", () => eq(Math.round(rect("sp" + n).height), 24));
+  }
+  check("icon between words stays in line", () => eq(Math.round(rect("sp4").top) === Math.round(rect("sp6").top), true));
+  console.log("DONE");
+});
+</script></body></html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><title>replaced elements in flex</title><style>
+body { margin: 0 }
+.fl { display: flex }
+.row { display: flex; align-items: center; width: 400px }
+img.sized { width: 24px; height: 24px }
+img.hsized { height: 12px }
+svg.sized { width: 24px; height: 24px }
+</style></head><body>
+<div class="row"><img id="a" class="sized" src="red.png"><span id="a2">text</span></div>
+<div class="row"><img id="b" class="hsized" src="red.png"></div>
+<div class="row"><img id="c" src="red.png"></div>
+<div class="row"><svg id="d" class="sized" viewBox="0 0 512 512"><rect width="512" height="512" fill="red"/></svg><span>text</span></div>
+<div class="fl"><a href="#" class="fl"><img id="e" class="sized" src="red.png"></a></div>
+<div class="fl"><a href="#" class="fl"><svg id="f" class="sized" viewBox="0 0 512 512"><rect width="512" height="512"/></svg></a></div>
+<div class="fl"><a href="#" class="fl"><svg id="g" class="sized" viewBox="0 0 512 512" width="512" height="512"><rect width="512" height="512"/></svg></a></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const sz = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return Math.round(r.width) + "x" + Math.round(r.height); };
+window.addEventListener("load", () => {
+  check("image with css width and height", () => eq(sz("a"), "24x24"));
+  check("image with css height keeps its ratio", () => eq(sz("b"), "24x12"));
+  check("image with no css size", () => eq(sz("c"), "60x30"));
+  check("svg with css size", () => eq(sz("d"), "24x24"));
+  check("image in a flex item with an automatic width", () => eq(sz("e"), "24x24"));
+  check("svg in a flex item with an automatic width", () => eq(sz("f"), "24x24"));
+  check("svg with a size attribute and a css size", () => eq(sz("g"), "24x24"));
+  console.log("DONE");
+});
+</script></body></html>

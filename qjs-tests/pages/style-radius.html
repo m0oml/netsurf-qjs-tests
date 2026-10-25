@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><title>border-radius styles</title><style>
+body { margin: 0; font-size: 16px }
+#a { width: 100px; height: 50px; border-radius: 10px }
+#b { width: 100px; height: 50px; border-radius: 10px 20px 30px 40px }
+#c { width: 100px; height: 50px; border-radius: 50% }
+#d { width: 100px; height: 50px; border-radius: 16px / 32px }
+#e { width: 100px; height: 50px; border-top-left-radius: 8px 4px }
+#f { width: 100px; height: 50px }
+#g { width: 100px; height: 50px; --r: 6px; border-radius: var(--r) }
+.p { border-radius: 12px }
+</style></head><body>
+<div id="a"></div><div id="b"></div><div id="c"></div><div id="d"></div><div id="e"></div><div id="f"></div><div id="g"></div>
+<div class="p" id="parent"><div id="child"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const cs = (id) => getComputedStyle(document.getElementById(id));
+document.addEventListener("DOMContentLoaded", () => {
+  check("one radius", () => eq(cs("a").borderRadius, "10px"));
+  check("corner of one radius", () => eq(cs("a").borderTopLeftRadius, "10px"));
+  check("four radii", () => eq(cs("b").borderRadius, "10px 20px 30px 40px"));
+  check("each corner", () => eq([cs("b").borderTopLeftRadius, cs("b").borderTopRightRadius, cs("b").borderBottomRightRadius, cs("b").borderBottomLeftRadius].join(), "10px,20px,30px,40px"));
+  check("percentage", () => eq(cs("c").borderRadius, "50%"));
+  check("elliptical shorthand", () => eq(cs("d").borderRadius, "16px / 32px"));
+  check("elliptical corner", () => eq(cs("e").borderTopLeftRadius, "8px 4px"));
+  check("no radius", () => eq(cs("f").borderRadius, "0px"));
+  check("var()", () => eq(cs("g").borderRadius, "6px"));
+  check("not inherited", () => eq(cs("child").borderRadius, "0px"));
+  check("inline style", () => { const f = document.getElementById("f"); f.style.borderRadius = "5px"; return eq(f.style.borderRadius + "|" + cs("f").borderRadius, "5px|5px"); });
+  check("style property supported", () => ("borderRadius" in document.body.style) && ("boxShadow" in document.body.style) && ("backgroundSize" in document.body.style));
+  console.log("DONE");
+});
+</script></body></html>

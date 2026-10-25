@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><title>flex absolute child</title><style>
+body { margin: 0 }
+#row { display: flex; width: 400px; position: relative }
+#grow { flex: 1; height: 20px }
+#fixed { width: 50px; height: 20px }
+#abs { position: absolute; width: 300px; height: 5px }
+</style></head><body>
+<div id="row"><div id="grow"></div><div id="fixed"></div><div id="abs"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+document.addEventListener("DOMContentLoaded", () => {
+  check("growing item fills the row", () => eq(document.getElementById("grow").offsetWidth, 350));
+  check("fixed item after it", () => eq(document.getElementById("fixed").offsetLeft, 350));
+  check("absolute child at the start", () => eq(document.getElementById("abs").offsetLeft, 0));
+  check("absolute child keeps its width", () => eq(document.getElementById("abs").offsetWidth, 300));
+  console.log("DONE");
+});
+</script>
+</body></html>

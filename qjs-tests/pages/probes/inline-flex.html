@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+body { margin: 0; }
+.c { text-align: center; width: 600px; }
+.ib { display: inline-block; width: 200px; height: 40px; }
+.if { display: inline-flex; width: 200px; height: 40px; }
+.ifa { display: inline-flex; }
+.ifp { display: inline-flex; width: 50%; }
+</style></head><body>
+<div class="c" id="p1"><div class="ib" id="ib">x</div></div>
+<div class="c" id="p2"><div class="if" id="if"><span>x</span></div></div>
+<div class="c" id="p3"><div class="ifa" id="ifa"><span>x</span><span>yy</span></div></div>
+<div class="c" id="p4"><div class="ifp" id="ifp"><input id="in4" style="flex:1"></div></div>
+<div class="c" id="p5"><div class="ifp" id="ifp5"><input id="in5" style="flex:1"><button>s</button></div></div>
+<script>
+window.addEventListener("load", () => setTimeout(() => {
+  for (const id of ["p1","ib","p2","if","p3","ifa","p4","ifp","in4","p5","ifp5","in5"]) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    console.log(id, "x=" + Math.round(r.x), "y=" + Math.round(r.y), Math.round(r.width) + "x" + Math.round(r.height));
+  }
+  console.log("DONE");
+}, 500));
+</script></body></html>

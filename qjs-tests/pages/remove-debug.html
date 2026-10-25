@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><body><div id="d">d</div><iframe id="f" src="frames/inner.html"></iframe><p id="p">p</p>
+<script>
+const f = document.getElementById("f");
+console.log("iframe class " + Object.prototype.toString.call(f) + " parent " + f.parentNode);
+f.remove();
+console.log("after remove parent " + f.parentNode + " byid " + document.getElementById("f") + " qs " + document.querySelector("#f"));
+const p = document.getElementById("p"); p.remove();
+console.log("p removed byid " + document.getElementById("p"));
+const d = document.getElementById("d"); d.parentNode.removeChild(d);
+console.log("d removeChild byid " + document.getElementById("d"));
+</script></body></html>

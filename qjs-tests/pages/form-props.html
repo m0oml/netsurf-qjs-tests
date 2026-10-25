@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><title>select.selectedIndex and control.form</title></head><body>
+<form id="f1"><select id="s1"><option value="a">A</option><option value="b" selected>B</option><option value="c">C</option></select>
+<input id="i1" name="i1"><textarea id="t1"></textarea><button id="b1">go</button>
+<div><input id="i2"></div></form>
+<select id="s2"><option>x</option><option>y</option></select>
+<select id="s3"></select>
+<input id="i3">
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const $ = (id) => document.getElementById(id);
+document.addEventListener("DOMContentLoaded", () => {
+  check("selectedIndex of selected option", () => eq($("s1").selectedIndex, 1));
+  check("selectedIndex defaults to first", () => eq($("s2").selectedIndex, 0));
+  check("selectedIndex of empty select", () => eq($("s3").selectedIndex, -1));
+  check("set selectedIndex", () => { $("s1").selectedIndex = 2; return eq($("s1").selectedIndex + $("s1").value, "2c"); });
+  check("set selectedIndex updates selected", () => eq($("s1").children[1].selected, false));
+  check("out of range deselects all", () => { $("s1").selectedIndex = 9; return eq(Array.from($("s1").children).map(o => o.selected).join(), "false,false,false"); });
+  check("select.form", () => eq($("s1").form, $("f1")));
+  check("input.form", () => eq($("i1").form, $("f1")));
+  check("nested input.form", () => eq($("i2").form, $("f1")));
+  check("textarea.form", () => eq($("t1").form, $("f1")));
+  check("button.form", () => eq($("b1").form, $("f1")));
+  check("select outside form", () => eq($("s2").form, null));
+  check("input outside form", () => eq($("i3").form, null));
+  check("form.elements", () => eq(Array.from($("f1").elements).map((e) => e.tagName).join(), "SELECT,INPUT,TEXTAREA,BUTTON,INPUT"));
+  check("elements namedItem", () => eq($("f1").elements.namedItem("i1").tagName, "INPUT"));
+  check("select.options", () => eq(Array.from($("s2").options).map((o) => o.text).join(), "x,y"));
+  check("select.length", () => eq($("s2").length + $("s3").length, 2));
+  check("selectedOptions", () => { $("s2").selectedIndex = 1; return eq(Array.from($("s2").selectedOptions).map((o) => o.text).join(), "y"); });
+  console.log("DONE");
+});
+</script></body></html>

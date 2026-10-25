@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><title>block image in picture</title><style>
+body { margin: 0 }
+.w { position: relative }
+.w img { width: 100%; display: block }
+.f { display: flex; justify-content: flex-end; position: relative }
+</style></head><body>
+<div id="a" class="w"><picture><source srcset="red.png" media="(min-width: 100px)"><img src="red.png" alt="x"></picture></div>
+<div id="b"><div id="c" class="w"><picture><img src="red.png" alt="x"></picture></div></div>
+<div id="d" class="f"><span>flex</span></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const top = (id) => document.getElementById(id).getBoundingClientRect().top;
+window.addEventListener("load", () => {
+  check("picture block image in flow", () => top("a") === 0 ? true : top("a"));
+  check("second block after first", () => { const t = top("d"); return (t >= 0 && t < 100000) ? true : t; });
+  check("nested", () => { const t = top("c"); return (t >= 0 && t < 100000) ? true : t; });
+  console.log("DONE");
+});
+</script></body></html>

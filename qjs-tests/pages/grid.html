@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head><title>grid layout</title>
+<style>
+body { margin: 0; }
+.g { display: grid; width: 600px; margin-bottom: 10px; }
+.g > div { height: 20px; background: #ccc; }
+#g1 { grid-template-columns: 100px 1fr 2fr; column-gap: 30px; }
+#g2 { width: 300px; grid-template-columns: repeat(3, 1fr); row-gap: 5px; }
+#g2 > div { height: auto; min-height: 20px; }
+#g2 > .tall { height: 40px; }
+#g3 { grid-template-columns: repeat(4, 100px); grid-template-rows: 30px 30px; }
+#g3a { grid-column: 2 / 4; grid-row: 2; }
+#g3b { grid-column: 1 / -1; }
+#g3c { grid-column: span 2; }
+#g4 { grid-template-columns: 100px 1fr; grid-template-areas: "head head" "side main"; }
+#g4 > div { height: auto; }
+#g4h { grid-area: head; height: 25px !important; }
+#g4s { grid-area: side; }
+#g4m { grid-area: main; height: 50px !important; }
+#g5 { grid-template-columns: [full-start] 50px [content-start] 1fr [content-end] 50px [full-end]; }
+#g5a { grid-column: content; }
+#g5b { grid-column: full; }
+#g6 { grid-template-columns: auto 1fr; }
+#g6 > div { height: auto; }
+#g7 { width: 500px; grid-template-columns: repeat(auto-fill, 100px); }
+#g8 { justify-items: center; grid-template-columns: 200px; }
+#g8 > div { width: auto; }
+#g9 { grid-template-columns: 100px 100px; align-items: start; }
+#g9 > div { height: auto; }
+#g10 { display: inline-grid; width: auto; grid-template-columns: 50px 60px; }
+#g11 { grid-auto-flow: column; grid-template-rows: 20px 20px; grid-auto-columns: 70px; }
+#g12 { grid-template-columns: repeat(3, 100px); grid-auto-flow: row dense; }
+#g12 > .wide { grid-column: span 2; }
+#g13 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 20px; }
+#g14 { grid-template-columns: 1fr 1fr; width: 200px; }
+#g14 > div { height: auto; }
+#g15 { grid-template-columns: 100px; grid-template-rows: 100px; }
+#g15 > div { width: 40px; height: 40px; margin: auto; }
+</style></head><body>
+<div class="g" id="g1"><div id="g1a"></div><div id="g1b"></div><div id="g1c"></div></div>
+<div class="g" id="g2"><div id="g2a"></div><div class="tall"></div><div></div><div id="g2d"></div></div>
+<div class="g" id="g3"><div id="g3a"></div><div id="g3b"></div><div id="g3c"></div></div>
+<div class="g" id="g4"><div id="g4m"></div><div id="g4s">side</div><div id="g4h"></div></div>
+<div class="g" id="g5"><div id="g5a"></div><div id="g5b"></div></div>
+<div class="g" id="g6"><div id="g6a"><div style="width: 80px; height: 10px"></div></div><div id="g6b">x</div></div>
+<div class="g" id="g7"><div></div><div></div><div></div><div></div><div id="g7e"></div><div id="g7f"></div></div>
+<div class="g" id="g8"><div id="g8a"><span style="display: inline-block; width: 60px">a</span></div></div>
+<div class="g" id="g9"><div id="g9a" style="height: 50px"></div><div id="g9b">b</div></div>
+<div><div class="g" id="g10"><div></div><div></div></div></div>
+<div class="g" id="g11"><div></div><div></div><div id="g11c"></div></div>
+<div class="g" id="g12"><div class="wide" id="g12a"></div><div class="wide" id="g12b"></div><div id="g12c"></div></div>
+<div class="g" id="g13"><div></div><div id="g13b"></div><div id="g13c"></div></div>
+<div class="g" id="g14"><div id="g14a">supercalifragilisticexpialidocious</div><div id="g14b">b</div></div>
+<div class="g" id="g15"><div id="g15a"></div></div>
+<div class="g" id="g16" style="width: 100px"><div style="grid-column: 1000 / span 1000; grid-row: -1000"></div><div id="g16b" style="grid-row: 900; grid-column: -900 / span 5"></div><div></div></div>
+<div class="g" id="g17" style="grid-template-columns: 100px 100px"><div id="g17a" style="order: 1"></div><div id="g17b"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+const near = (a, b) => Math.abs(a - b) <= 1;
+const box = (id) => { const b = r(id); return [b.left, b.top - r(document.getElementById(id).parentNode.id).top, b.width, b.height].map(Math.round).join(","); };
+window.addEventListener("load", () => setTimeout(() => {
+  check("fixed and fr columns", () => (r("g1a").left === 0 && r("g1a").width === 100 && near(r("g1b").left, 130) && near(r("g1b").width, 146) && near(r("g1c").left, 306) && near(r("g1c").width, 293)) || [box("g1a"), box("g1b"), box("g1c")].join(" "));
+  check("items wrap onto a new row", () => (r("g2d").left === 0 && r("g2d").top - r("g2").top === 45) || box("g2d"));
+  check("items in a row stretch", () => r("g2a").height === 40 || r("g2a").height);
+  check("container height", () => r("g2").height === 65 || r("g2").height);
+  check("explicit lines", () => box("g3a") === "100,30,200,20" || box("g3a"));
+  check("line -1 is the last", () => box("g3b") === "0,0,400,20" || box("g3b"));
+  check("auto-placed span", () => box("g3c") === "0,60,200,20" || box("g3c"));
+  check("areas", () => box("g4h") === "0,0,600,25" && box("g4s") === "0,25,100,50" && box("g4m") === "100,25,500,50" || [box("g4h"), box("g4s"), box("g4m")].join(" "));
+  check("named lines", () => box("g5a") === "50,0,500,20" || box("g5a"));
+  check("area names of lines", () => box("g5b") === "0,20,600,20" || box("g5b"));
+  check("auto column fits its content", () => (r("g6a").width === 80 && r("g6b").left === 80) || box("g6a") + " " + box("g6b"));
+  check("auto-fill repeats", () => (r("g7e").left === 400 && r("g7f").left === 0 && r("g7f").top - r("g7").top === 20) || box("g7e") + " " + box("g7f"));
+  check("justify-items centres", () => box("g8a") === "70,0,60,20" || box("g8a"));
+  check("align-items start", () => (r("g9b").height < 50 && r("g9").height === 50) || box("g9b"));
+  check("inline-grid shrinks", () => r("g10").width === 110 || r("g10").width);
+  check("column flow", () => box("g11c") === "70,0,70,20" || box("g11c"));
+  check("dense fills holes", () => box("g12c") === "200,0,100,20" || box("g12c"));
+  check("gap shorthand", () => box("g13b") === "310,0,290,20" && box("g13c") === "0,30,290,20" || box("g13b") + " " + box("g13c"));
+  check("1fr does not shrink below its content", () => (r("g14a").width > 100 && near(r("g14b").left, r("g14a").width)) || box("g14a") + " " + box("g14b"));
+  check("auto margins centre", () => box("g15a") === "30,30,40,40" || box("g15a"));
+  check("computed display", () => getComputedStyle(document.getElementById("g1")).display === "grid" || getComputedStyle(document.getElementById("g1")).display);
+  check("extreme lines are laid out", () => r("g16").height >= 0 || r("g16").height);
+  check("order in auto-placement", () => box("g17a") === "100,0,100,20" || box("g17a"));
+  console.log("DONE");
+}, 200));
+</script></body></html>

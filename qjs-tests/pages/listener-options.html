@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html><head><title>listener options</title></head><body>
+<div id="t"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const t = document.getElementById("t");
+const fire = () => t.dispatchEvent(new Event("x"));
+let n = 0;
+const inc = () => n++;
+check("passive option accepted", () => { t.addEventListener("x", inc, { passive: true }); fire(); return eq(n, 1); });
+check("remove with options", () => { t.removeEventListener("x", inc, { passive: true }); fire(); return eq(n, 1); });
+check("once", () => { n = 0; t.addEventListener("x", inc, { once: true }); fire(); fire(); return eq(n, 1); });
+check("once removed early", () => { n = 0; t.addEventListener("x", inc, { once: true }); t.removeEventListener("x", inc); fire(); return eq(n, 0); });
+check("capture option matches flag", () => { n = 0; t.addEventListener("x", inc, { capture: true }); t.removeEventListener("x", inc, true); fire(); return eq(n, 0); });
+check("signal", () => { n = 0; const ac = new AbortController(); t.addEventListener("x", inc, { signal: ac.signal }); fire(); ac.abort(); fire(); return eq(n, 1); });
+check("aborted signal", () => { n = 0; const ac = new AbortController(); ac.abort(); t.addEventListener("x", inc, { signal: ac.signal }); fire(); return eq(n, 0); });
+check("once this", () => { let self; t.addEventListener("x", function () { self = this; }, { once: true }); fire(); return self === t; });
+check("window options", () => { let got = 0; window.addEventListener("y", () => got++, { passive: true, once: true }); window.dispatchEvent(new Event("y")); window.dispatchEvent(new Event("y")); return eq(got, 1); });
+console.log("DONE");
+</script>
+</body></html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><title>layout at load</title><style>
+body { margin: 0; font-size: 16px }
+#box { margin: 10px; padding: 5px; border: 2px solid black; width: 100px; height: 40px }
+#flex { display: flex; width: 300px }
+#flex div { flex: 1; height: 10px }
+.tall { height: 90px !important }
+</style>
+<script defer src="data:text/javascript,window.deferW%3Ddocument.getElementById(%22box%22).offsetWidth%3B"></script>
+</head><body>
+<div id="box">box</div>
+<div id="flex"><div id="f1"></div><div id="f2"></div></div>
+<form id="f" action="about:blank"><input id="in" name="q" value="x" style="width:120px"></form>
+<img id="img" src="red.png" width="20" height="30">
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const box = document.getElementById("box");
+var dcl = {};
+var load = {};
+document.addEventListener("DOMContentLoaded", () => {
+  dcl.w = box.offsetWidth;
+  dcl.rect = box.getBoundingClientRect().top;
+  dcl.f2 = document.getElementById("f2").offsetLeft;
+  dcl.input = document.getElementById("in").offsetWidth;
+  dcl.display = getComputedStyle(box).display;
+  // a change after measuring is seen by the next measurement
+  box.classList.add("tall");
+  dcl.h = box.offsetHeight;
+  const added = document.createElement("div");
+  added.id = "added";
+  added.style.height = "7px";
+  document.body.appendChild(added);
+  dcl.added = added.offsetHeight;
+});
+window.addEventListener("load", () => {
+  load.w = box.offsetWidth;
+  load.h = box.offsetHeight;
+  load.img = document.getElementById("img").offsetWidth + "x" + document.getElementById("img").offsetHeight;
+  load.state = document.readyState;
+  setTimeout(report, 100);
+});
+function report() {
+  check("deferred script offsetWidth", () => eq(window.deferW, 114));
+  check("DOMContentLoaded offsetWidth", () => eq(dcl.w, 114));
+  check("DOMContentLoaded rect top", () => eq(dcl.rect, 10));
+  check("DOMContentLoaded flex item", () => eq(dcl.f2, 150));
+  check("DOMContentLoaded input", () => dcl.input >= 120 || dcl.input);
+  check("DOMContentLoaded computed display", () => eq(dcl.display, "block"));
+  check("DOMContentLoaded change seen", () => eq(dcl.h, 90 + 14));
+  check("DOMContentLoaded added element", () => eq(dcl.added, 7));
+  check("load offsetWidth", () => eq(load.w, 114));
+  check("load keeps change", () => eq(load.h, 104));
+  check("load image size", () => eq(load.img, "20x30"));
+  check("load readyState", () => eq(load.state, "complete"));
+  check("later offsetHeight", () => eq(box.offsetHeight, 104));
+  check("added element displayed", () => eq(document.getElementById("added").offsetHeight, 7));
+  console.log("DONE");
+}
+</script>
+</body></html>

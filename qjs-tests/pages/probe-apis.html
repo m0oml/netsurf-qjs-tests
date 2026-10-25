@@ -1,0 +1,27 @@
+<html><head><title> My  Title </title></head><body><p id="p">text</p><script>
+var names = ["self","top","parent","frames","window","performance","atob","btoa","requestAnimationFrame","localStorage","sessionStorage","history","getComputedStyle","matchMedia","Event","CustomEvent","MouseEvent","KeyboardEvent","XMLHttpRequest","fetch","Promise","Map","TextEncoder","queueMicrotask","structuredClone","URL","URLSearchParams","MutationObserver","IntersectionObserver","ResizeObserver","customElements","Image","DOMParser","FormData","Blob","AbortController","crypto","screen","innerWidth","devicePixelRatio","scrollTo","scrollY","pageYOffset","alert","confirm","location","navigator"];
+var out = [];
+for (var i = 0; i < names.length; i++) { var t; try { t = typeof window[names[i]]; } catch (e) { t = "throws"; } out.push(names[i] + "=" + t); }
+console.log(out.join(" "));
+var p = document.getElementById("p");
+var bits = [];
+function v(name, f) { try { var r = f(); bits.push(name + "=" + (typeof r === "string" ? JSON.stringify(r) : r)); } catch (e) { bits.push(name + "!" + e); } }
+v("title", function(){ return document.title; });
+v("children", function(){ return document.body.children && document.body.children.length; });
+v("textnode.data", function(){ return p.firstChild.data; });
+v("nodeValue", function(){ return p.firstChild.nodeValue; });
+v("dataset", function(){ return typeof p.dataset; });
+v("style", function(){ return typeof p.style; });
+v("style.display", function(){ p.style.display = "none"; return p.style.display; });
+v("innerHTML", function(){ return p.innerHTML; });
+v("outerHTML", function(){ return p.outerHTML; });
+v("createEvent Custom", function(){ return String(document.createEvent("CustomEvent")); });
+v("createEvent Mouse", function(){ return String(document.createEvent("MouseEvent")); });
+v("createEvent UI", function(){ return String(document.createEvent("UIEvent")); });
+v("doc.body.parentNode", function(){ return document.body.parentNode === document.documentElement; });
+v("window.document", function(){ return window.document === document; });
+v("location.href", function(){ return location.href.slice(0, 8); });
+v("document.cookie", function(){ return typeof document.cookie; });
+v("doc.head", function(){ return document.head && document.head.tagName; });
+console.log(bits.join(" | "));
+</script></body></html>

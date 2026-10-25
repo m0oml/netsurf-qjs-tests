@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><body><div id="d"></div><svg id="s"><foreignObject id="fo"></foreignObject></svg><script>
+const check = (name, ok) => console.log((ok ? "PASS " : "FAIL ") + name);
+const d = document.getElementById("d");
+check("div localName " + d.localName, d.localName === "div");
+check("div namespaceURI " + d.namespaceURI, d.namespaceURI === "http://www.w3.org/1999/xhtml");
+check("div prefix", d.prefix === null);
+const s = document.getElementById("s");
+check("svg localName " + s.localName, s.localName === "svg");
+check("svg namespaceURI " + s.namespaceURI, s.namespaceURI === "http://www.w3.org/2000/svg");
+const fo = document.getElementById("fo");
+check("foreignObject localName " + (fo && fo.localName), fo && fo.localName === "foreignObject");
+const c = document.createElement("SPAN");
+check("svg tagName " + s.tagName + " " + fo.tagName, s.tagName === "svg" && fo.tagName === "foreignObject" && d.tagName === "DIV");
+check("created localName " + c.localName, c.localName === "span");
+const n = document.createElementNS("http://www.w3.org/2000/svg", "g:rect");
+check("NS prefix " + n.prefix + " " + n.localName, n.prefix === "g" && n.localName === "rect");
+console.log("DONE");
+</script></body></html>

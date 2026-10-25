@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><title>flex justify-content</title>
+<style>
+body { margin: 0; }
+.f { display: flex; width: 400px; margin-bottom: 5px; }
+.f > div { width: 50px; height: 10px; background: #ccc; }
+#j1 { justify-content: flex-end; }
+#j2 { justify-content: center; }
+#j3 { justify-content: space-between; }
+#j4 { justify-content: space-around; }
+#j5 { justify-content: space-evenly; }
+#j6 { justify-content: flex-end; flex-direction: row-reverse; }
+#j7 { justify-content: center; column-gap: 20px; }
+#j8 { justify-content: center; }
+#j8 > div:first-child { margin-left: auto; }
+#j9 { justify-content: space-between; }
+#j10 { justify-content: flex-end; flex-direction: column; height: 100px; width: 50px; }
+#j11 { justify-content: center; }
+#j11 > div { flex: 1; }
+#j12 { justify-content: space-between; flex-wrap: wrap; width: 220px; }
+</style></head><body>
+<div class="f" id="j1"><div id="a1"></div><div id="a2"></div></div>
+<div class="f" id="j2"><div id="b1"></div><div id="b2"></div></div>
+<div class="f" id="j3"><div id="c1"></div><div id="c2"></div><div id="c3"></div></div>
+<div class="f" id="j4"><div id="d1"></div><div id="d2"></div></div>
+<div class="f" id="j5"><div id="e1"></div><div id="e2"></div></div>
+<div class="f" id="j6"><div id="f1"></div><div id="f2"></div></div>
+<div class="f" id="j7"><div id="g1"></div><div id="g2"></div></div>
+<div class="f" id="j8"><div id="h1"></div><div id="h2"></div></div>
+<div class="f" id="j9"><div id="i1"></div></div>
+<div class="f" id="j10"><div id="k1"></div><div id="k2"></div></div>
+<div class="f" id="j11"><div id="l1"></div><div id="l2"></div></div>
+<div class="f" id="j12"><div id="m1"></div><div id="m2"></div><div id="m3"></div><div id="m4"></div><div id="m5"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+const lefts = (...ids) => ids.map((i) => Math.round(r(i).left)).join(",");
+window.addEventListener("load", () => setTimeout(() => {
+  check("flex-end", () => lefts("a1", "a2") === "300,350" || lefts("a1", "a2"));
+  check("center", () => lefts("b1", "b2") === "150,200" || lefts("b1", "b2"));
+  check("space-between", () => lefts("c1", "c2", "c3") === "0,175,350" || lefts("c1", "c2", "c3"));
+  check("space-around", () => lefts("d1", "d2") === "75,275" || lefts("d1", "d2"));
+  check("space-evenly", () => lefts("e1", "e2") === "100,250" || lefts("e1", "e2"));
+  check("flex-end with row-reverse", () => lefts("f1", "f2") === "50,0" || lefts("f1", "f2"));
+  check("center with a gap", () => lefts("g1", "g2") === "140,210" || lefts("g1", "g2"));
+  check("auto margins take the space first", () => lefts("h1", "h2") === "300,350" || lefts("h1", "h2"));
+  check("space-between with one item is flex-start", () => lefts("i1") === "0" || lefts("i1"));
+  check("flex-end in a column", () => (r("k1").top - r("j10").top === 80 && r("k2").top - r("j10").top === 90) || r("k1").top - r("j10").top);
+  check("grown items leave no space", () => lefts("l1", "l2") === "0,200" || lefts("l1", "l2"));
+  check("space-between on a wrapped line", () => (lefts("m1", "m2", "m3", "m4", "m5") === "0,56,112,168,0") || lefts("m1", "m2", "m3", "m4", "m5"));
+  check("computed", () => getComputedStyle(document.getElementById("j3")).justifyContent === "space-between" || getComputedStyle(document.getElementById("j3")).justifyContent);
+  console.log("DONE");
+}, 200));
+</script></body></html>

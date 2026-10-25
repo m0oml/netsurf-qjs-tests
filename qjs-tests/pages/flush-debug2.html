@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><style>.big{height:120px}.hidden{display:none}.red{color:red}</style></head><body><div id="a">a</div><div id="b">b</div><div id="c">c</div><script>
+document.addEventListener("DOMContentLoaded", () => setTimeout(() => {
+  const a = document.getElementById("a"), b = document.getElementById("b"), c = document.getElementById("c");
+  a.classList.add("hidden");
+  console.log("only hidden: " + a.offsetHeight + " " + getComputedStyle(a).display);
+  b.className = "big hidden";
+  console.log("both at once: " + b.offsetHeight + " " + getComputedStyle(b).display);
+  c.classList.add("big"); c.offsetHeight; c.classList.add("red");
+  console.log("big then red: color=" + getComputedStyle(c).color);
+}, 50));
+</script></body></html>

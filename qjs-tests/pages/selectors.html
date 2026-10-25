@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><title>selectors</title></head><body>
+<div id="main" class="box primary">
+  <p class="intro first">one</p>
+  <p class="intro">two <span class="hl">x</span></p>
+  <p>three</p>
+  <ul id="list">
+    <li data-n="1">a</li><li data-n="2" class="odd-one">b</li><li data-n="3">c</li><li data-n="4">d</li><li data-n="5">e</li>
+  </ul>
+  <a href="/x" id="link1">link</a><a id="nolink">no</a>
+  <form><input id="cb" type="checkbox" checked><input id="t" type="text" disabled required><button id="b">go</button></form>
+  <div id="empty"></div><div id="ws"> </div>
+</div>
+<div id="other" title="hello world" lang="fr"><b>bold</b></div>
+<script>
+var results = [];
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+function ids(list) { var out = []; for (var i = 0; i < list.length; i++) { out.push(list[i].id || list[i].tagName.toLowerCase()); } return out.join(","); }
+function texts(list) { var out = []; for (var i = 0; i < list.length; i++) { out.push(list[i].textContent); } return out.join(","); }
+function eq(a, b) { return a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b); }
+var d = document;
+check("querySelector id", function () { return eq(d.querySelector("#main").id, "main"); });
+check("querySelector missing", function () { return eq(d.querySelector("#nope"), null); });
+check("qsa type", function () { return eq(d.querySelectorAll("p").length, 3); });
+check("qsa class", function () { return eq(texts(d.querySelectorAll(".intro")), "one,two x"); });
+check("qsa compound", function () { return eq(d.querySelectorAll("p.intro.first").length, 1); });
+check("qsa descendant", function () { return eq(texts(d.querySelectorAll("#main span")), "x"); });
+check("qsa child", function () { return eq(d.querySelectorAll("#main > span").length, 0); });
+check("qsa child2", function () { return eq(d.querySelectorAll("#main > p").length, 3); });
+check("adjacent", function () { return eq(texts(d.querySelectorAll(".first + p")), "two x"); });
+check("sibling", function () { return eq(texts(d.querySelectorAll(".first ~ p")), "two x,three"); });
+check("group order", function () { return eq(ids(d.querySelectorAll("#other, #main")), "main,other"); });
+check("universal", function () { return eq(d.querySelectorAll("#list > *").length, 5); });
+check("attr presence", function () { return eq(d.querySelectorAll("[data-n]").length, 5); });
+check("attr equals", function () { return eq(texts(d.querySelectorAll("li[data-n='3']")), "c"); });
+check("attr ~=", function () { return eq(d.querySelectorAll("[title~=world]").length, 1); });
+check("attr ^= $= *=", function () { return eq(d.querySelectorAll("[title^=hel][title$=rld][title*='o w']").length, 1); });
+check("attr |=", function () { return eq(d.querySelectorAll("[lang|=en]").length, 1); });
+check("attr i flag", function () { return eq(d.querySelectorAll("[title='HELLO WORLD' i]").length, 1); });
+check("first-child", function () { return eq(texts(d.querySelectorAll("li:first-child")), "a"); });
+check("last-child", function () { return eq(texts(d.querySelectorAll("li:last-child")), "e"); });
+check("nth-child(2n+1)", function () { return eq(texts(d.querySelectorAll("li:nth-child(2n+1)")), "a,c,e"); });
+check("nth-child(even)", function () { return eq(texts(d.querySelectorAll("li:nth-child(even)")), "b,d"); });
+check("nth-child(-n+2)", function () { return eq(texts(d.querySelectorAll("li:nth-child(-n+2)")), "a,b"); });
+check("nth-last-child(1)", function () { return eq(texts(d.querySelectorAll("li:nth-last-child(1)")), "e"); });
+check("nth-of-type", function () { return eq(texts(d.querySelectorAll("#main > p:nth-of-type(2)")), "two x"); });
+check("first-of-type", function () { return eq(ids(d.querySelectorAll("#main > a:first-of-type")), "link1"); });
+check("not", function () { return eq(texts(d.querySelectorAll("li:not(.odd-one):not(:first-child)")), "c,d,e"); });
+check("not list", function () { return eq(texts(d.querySelectorAll("li:not(:first-child, :last-child)")), "b,c,d"); });
+check("is", function () { return eq(d.querySelectorAll(":is(#main, #other) > b").length, 1); });
+check("has", function () { return eq(texts(d.querySelectorAll("p:has(span)")), "two x"); });
+check("has child", function () { return eq(ids(d.querySelectorAll("div:has(> b)")), "other"); });
+check("empty", function () { return eq(ids(d.querySelectorAll("div:empty")), "empty"); });
+check("root", function () { return eq(d.querySelector(":root"), d.documentElement); });
+check("checked", function () { return eq(ids(d.querySelectorAll(":checked")), "cb"); });
+check("disabled/enabled", function () { return eq(ids(d.querySelectorAll("input:disabled")) + "|" + ids(d.querySelectorAll("form :enabled")), "t|cb,b"); });
+check("required", function () { return eq(ids(d.querySelectorAll(":required")), "t"); });
+check("link", function () { return eq(ids(d.querySelectorAll("a:link")), "link1"); });
+check("lang", function () { return eq(ids(d.querySelectorAll("div:lang(fr)")), "other"); });
+check("hover never", function () { return eq(d.querySelectorAll(":hover").length, 0); });
+check("pseudo-element", function () { return eq(d.querySelectorAll("p::before").length, 0); });
+check("invalid throws", function () { try { d.querySelector("p >"); return "no throw"; } catch (e) { return e instanceof SyntaxError; } });
+check("unknown pseudo throws", function () { try { d.querySelector(":bogus"); return "no throw"; } catch (e) { return e instanceof SyntaxError; } });
+check("element scoped", function () { return eq(texts(d.getElementById("list").querySelectorAll("li:nth-child(2)")), "b"); });
+check("element scope sees ancestors", function () { return eq(d.getElementById("list").querySelectorAll("div li").length, 5); });
+check(":scope child", function () { return eq(d.getElementById("main").querySelectorAll(":scope > ul > li").length, 5); });
+check("matches", function () { var li = d.querySelector("[data-n='2']"); return eq(li.matches("ul > li.odd-one") && !li.matches("p"), true); });
+check("closest", function () { return eq(d.querySelector(".hl").closest("div").id, "main"); });
+check("closest self", function () { return eq(d.querySelector(".hl").closest("span"), d.querySelector(".hl")); });
+check("getElementsByClassName", function () { return eq(d.getElementsByClassName("intro first").length, 1); });
+check("element getElementsByClassName", function () { return eq(d.getElementById("main").getElementsByClassName("hl").length, 1); });
+check("qsa item/forEach", function () { var l = d.querySelectorAll("li"); var n = 0; l.forEach(function () { n++; }); return eq(n === 5 && l.item(0) === l[0] && l.item(9) === null, true); });
+check("escaped id", function () { var e = d.createElement("div"); e.id = "a:b"; d.body.appendChild(e); return eq(d.querySelector("#a\\:b"), e); });
+check("fragment qsa", function () { var f = d.createDocumentFragment(); var s = d.createElement("section"); s.appendChild(d.createElement("i")); f.appendChild(s); return eq(f.querySelectorAll("section i").length, 1); });
+console.log("DONE");
+</script></body></html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html><head><title>constructors and small interfaces</title></head><body>
+<div id="host"></div>
+<template id="t"><p class="x">one</p><b>two</b></template>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+check("new Text", () => { const t = new Text("hi"); return eq([t.nodeType, t.data, t instanceof Text, t instanceof Node].join(), "3,hi,true,true"); });
+check("new Comment", () => { const c = new Comment("c"); return eq([c.nodeType, c.data].join(), "8,c"); });
+check("new DocumentFragment", () => { const f = new DocumentFragment(); f.appendChild(document.createElement("i")); return eq([f.nodeType, f.childNodes.length].join(), "11,1"); });
+check("new Image", () => { const i = new Image(10, 20); return eq([i.tagName, i.getAttribute("width"), i.getAttribute("height")].join(), "IMG,10,20"); });
+check("new Audio", () => eq(new Audio("a.mp3").tagName, "AUDIO"));
+check("new Option", () => { const o = new Option("Label", "v", true); return eq([o.tagName, o.textContent, o.value, o.hasAttribute("selected")].join(), "OPTION,Label,v,true"); });
+check("constructor property", () => eq(new Text("x").constructor === Text, true));
+check("Text without new", () => { try { Text("x"); return "no throw"; } catch (e) { return e instanceof TypeError ? true : String(e); } });
+check("textContent of a detached text node", () => { const t = new Text("a"); t.textContent = "b"; t.data += "c"; return eq(t.data, "bc"); });
+check("textContent of a detached comment", () => { const c = new Comment("a"); c.textContent = "b"; return eq(c.data, "b"); });
+check("append constructed", () => { document.getElementById("host").appendChild(new Text("z")); return eq(document.getElementById("host").textContent, "z"); });
+check("XMLSerializer", () => eq(new XMLSerializer().serializeToString(document.getElementById("host")), '<div id="host">z</div>'));
+check("DOMParser", () => { const d = new DOMParser().parseFromString("<p id='q'>parsed</p>", "text/html"); return eq(d.getElementById("q").textContent, "parsed"); });
+check("workers are absent", () => eq([typeof Worker, typeof WebSocket, typeof EventSource].join(), "undefined,undefined,undefined"));
+check("template content", () => { const c = document.getElementById("t").content; return eq([c.nodeType, c.childNodes.length, c.querySelector(".x").textContent].join(), "11,2,one"); });
+check("template content clone", () => { const n = document.getElementById("t").content.cloneNode(true); document.getElementById("host").appendChild(n); return eq(document.querySelectorAll("#host .x").length, 1); });
+check("requestIdleCallback", () => typeof requestIdleCallback === "function" && typeof cancelIdleCallback === "function");
+check("getSelection", () => eq(getSelection().toString() + getSelection().rangeCount, "0"));
+check("Intl.NumberFormat", () => eq(new Intl.NumberFormat("en-GB").format(1234567.891), "1,234,567.891"));
+check("Intl currency", () => eq(new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(1234.5), "\u00a31,234.50"));
+check("Intl percent", () => eq(new Intl.NumberFormat("en", { style: "percent" }).format(0.256), "25.6%"));
+check("Intl.Collator", () => eq(["b", "a", "c"].sort(new Intl.Collator().compare).join(), "a,b,c"));
+check("Intl.PluralRules", () => eq(new Intl.PluralRules("en").select(1) + new Intl.PluralRules("en").select(2), "oneother"));
+check("Intl.RelativeTimeFormat", () => eq(new Intl.RelativeTimeFormat("en").format(-3, "days"), "3 days ago"));
+check("Intl.ListFormat", () => eq(new Intl.ListFormat("en").format(["a", "b", "c"]), "a, b and c"));
+check("Intl.DateTimeFormat", () => typeof new Intl.DateTimeFormat("en-GB").format(new Date(0)) === "string");
+check("MessageChannel", () => typeof new MessageChannel().port1.postMessage === "function");
+const channel = new MessageChannel();
+const received = [];
+channel.port1.onmessage = (e) => received.push(e.data);
+channel.port2.postMessage({ a: 1 });
+channel.port2.postMessage("two");
+setTimeout(() => {
+  check("MessageChannel delivers", () => eq(JSON.stringify(received), '[{"a":1},"two"]'));
+  console.log("DONE");
+}, 100);
+</script></body></html>

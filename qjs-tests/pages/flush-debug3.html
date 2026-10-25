@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><style>.big{height:120px}.red{color:red}</style></head><body><div id="c">c</div><div id="d">d</div><div id="e">e</div><script>
+document.addEventListener("DOMContentLoaded", () => setTimeout(() => {
+  const c = document.getElementById("c"), d = document.getElementById("d"), e = document.getElementById("e");
+  c.className = "big"; c.offsetHeight; c.className = "big red";
+  console.log("className twice: color=" + getComputedStyle(c).color + " h=" + c.offsetHeight);
+  d.classList.add("red");
+  console.log("first red: color=" + getComputedStyle(d).color);
+  e.setAttribute("class", "big"); e.offsetHeight; e.setAttribute("class", "red");
+  console.log("setAttribute big then red: color=" + getComputedStyle(e).color + " h=" + e.offsetHeight + " matches=" + e.matches(".red"));
+}, 50));
+</script></body></html>

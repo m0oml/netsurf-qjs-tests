@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+.wrap{text-align:center}
+.box{white-space:nowrap;width:100%;max-width:44rem;flex-direction:row;display:inline-flex}
+#q{display:block;flex:1;width:100%;border:none;margin:0;font-size:1.1rem;padding-left:1rem}
+#b{display:block;border:none;margin:0;font-size:1.1rem}
+.box2{display:flex;width:400px}
+#q2{flex:1}
+.box3{display:inline-flex;width:400px}
+#q3{flex:1}
+.box4{display:flex;width:400px}
+#q4{width:100%}
+</style></head><body>
+<div class="wrap"><div class="box"><input id="q" type="text"><button id="b">search</button></div></div>
+<div class="box2"><input id="q2" type="text"><button>s</button></div>
+<div class="box3"><input id="q3" type="text"><button>s</button></div>
+<div class="box4"><input id="q4" type="text"><button>s</button></div>
+<div style="width:400px"><input id="q5" type="text" style="width:100%"></div>
+<script>
+window.addEventListener("load", () => setTimeout(() => {
+  for (const id of ["q", "b", "q2", "q3", "q4", "q5"]) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    console.log(id, Math.round(r.x), Math.round(r.width) + "x" + Math.round(r.height), "box:", Math.round(document.getElementById(id).parentNode.getBoundingClientRect().width));
+  }
+  console.log("DONE");
+}, 500));
+</script></body></html>

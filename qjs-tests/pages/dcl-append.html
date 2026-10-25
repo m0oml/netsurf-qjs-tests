@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><title>dcl</title></head><body><div id="a">a</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("dcl fired, body=" + document.body);
+  try {
+    const p = document.createElement("div"); p.id = "c"; p.textContent = "C";
+    document.body.append(p);
+    console.log("appended, found=" + !!document.getElementById("c") + " children=" + document.body.children.length);
+  } catch (e) { console.log("threw " + e); }
+});
+</script>
+</body></html>

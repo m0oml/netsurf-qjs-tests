@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>fetch and XMLHttpRequest</title></head><body>
+<form id="f"><input name="a" value="1"><input type="checkbox" name="c" checked>
+<input type="checkbox" name="u"><select name="s"><option>x</option><option selected>y</option></select>
+<textarea name="t">text area</textarea><input type="submit" name="go" value="Go"></form>
+<script>
+/* Served by qjs-tests/net-server.py on port 8701, with 8702 as another
+ * origin.  Load http://127.0.0.1:8701/net-fetch.html
+ */
+const OTHER = "http://" + location.hostname + ":8702";
+const tests = [];
+const test = (name, fn) => tests.push([name, fn]);
+const eq = (a, b, what) => {
+  if (JSON.stringify(a) !== JSON.stringify(b)) {
+    throw new Error(`${what || "value"}: got ${JSON.stringify(a)} expected ${JSON.stringify(b)}`);
+  }
+};
+const rejects = async (p, type) => {
+  try {
+    await p;
+  } catch (e) {
+    if (type && e.name !== type) {
+      throw new Error(`rejected with ${e.name}: ${e.message}, expected ${type}`);
+    }
+    return e;
+  }
+  throw new Error("did not reject");
+};
+const xhr = (method, url, setup) => new Promise((resolve) => {
+  const x = new XMLHttpRequest();
+  const events = [];
+  for (const t of ["readystatechange", "loadstart", "progress", "load", "error", "abort", "timeout", "loadend"]) {
+    x.addEventListener(t, () => {
+      events.push(t === "readystatechange" ? "rs" + x.readyState : t);
+      if (t === "loadend") {
+        resolve({ x, events });
+      }
+    });
+  }
+  x.open(method, url);
+  (setup || ((r) => r.send()))(x);
+});
+
+/* fetch basics */
+
+test("fetch json", async () => {
+  const r = await fetch("/api/json");
+  eq([r.ok, r.status, r.type, r.redirected], [true, 200, "basic", false]);
+  eq(r.headers.get("content-type"), "application/json");
+  eq(r.url, location.origin + "/api/json", "url");
+  const j = await r.json();
+  eq(j, { a: 1, b: [1, 2, 3], c: "é中" });
+  eq(r.bodyUsed, true, "bodyUsed");
+  await rejects(r.text(), "TypeError");
+});
+
+test("fetch POST json", async () => {
+  const r = await fetch("api/echo?x=1", {
+    method: "post", body: JSON.stringify({ k: "v" }),
+    headers: { "Content-Type": "application/json", "X-Test": "yes" }
+  });
+  const e = await r.json();
+  eq([e.method, e.body, e.headers["content-type"], e.headers["x-test"], e.query.x],
+     ["POST", '{"k":"v"}', "application/json", "yes", "1"]);
+});
+
+test("fetch string body type", async () => {
+  const e = await (await fetch("/api/echo", { method: "POST", body: "héllo" })).json();
+  eq([e.body, e.bodyLength, e.headers["content-type"]], ["héllo", 6, "text/plain;charset=UTF-8"]);
+});
+
+test("fetch URLSearchParams body", async () => {
+  const e = await (await fetch("/api/echo", { method: "POST", body: new URLSearchParams({ a: "1 2", b: "&" }) })).json();
+  eq([e.body, e.headers["content-type"]], ["a=1+2&b=%26", "application/x-www-form-urlencoded;charset=UTF-8"]);
+});
+
+test("fetch binary body", async () => {
+  const e = await (await fetch("/api/echo", { method: "POST", body: new Uint8Array([65, 0, 66]) })).json();
+  eq([e.bodyLength, e.headers["content-type"]], [3, undefined]);
+});
+
+test("fetch empty body", async () => {
+  const e = await (await fetch("/api/echo", { method: "POST", body: "" })).json();
+  eq([e.method, e.bodyLength], ["POST", 0]);
+});
+
+test("fetch FormData body", async () => {
+  const fd = new FormData(document.getElementById("f"));
+  eq([...fd.keys()], ["a", "c", "s", "t"], "form entries");
+  fd.append("file", new Blob(["blob data"], { type: "text/plain" }), "f.txt");
+  const e = await (await fetch("/api/echo", { method: "POST", body: fd })).json();
+  if (!/^multipart\/form-data; boundary=/.test(e.headers["content-type"])) {
+    throw new Error("content type " + e.headers["content-type"]);
+  }
+  for (const want of ['name="a"\r\n\r\n1\r\n', 'name="s"\r\n\r\ny\r\n',
+                      'filename="f.txt"\r\nContent-Type: text/plain\r\n\r\nblob data\r\n']) {
+    if (!e.body.includes(want)) {
+      throw new Error("missing " + JSON.stringify(want));
+    }
+  }
+});
+
+test("fetch methods", async () => {
+  for (const m of ["PUT", "DELETE", "PATCH", "OPTIONS"]) {
+    const e = await (await fetch("/api/echo", { method: m })).json();
+    eq(e.method, m, m);
+  }
+  const put = await (await fetch("/api/echo", { method: "PUT", body: "put body" })).json();
+  eq([put.method, put.body], ["PUT", "put body"]);
+});
+
+test("fetch HEAD", async () => {
+  const r = await fetch("/api/json", { method: "HEAD" });
+  eq([r.status, await r.text()], [200, ""]);
+});
+
+test("fetch error statuses", async () => {
+  for (const code of [404, 401, 500, 204]) {
+    const r = await fetch("/api/status/" + code);
+    eq([r.status, r.ok], [code, false].map((v, i) => i === 1 ? code < 300 : v), "status " + code);
+  }
+  const r = await fetch("/api/status/418?reason=Teapot");
+  eq([r.status, r.statusText, await r.text()], [418, "Teapot", "status 418"]);
+});
+
+test("fetch request headers", async () => {
+  const e = await (await fetch("/api/echo", {
+    headers: [["X-A", "1"], ["X-A", "2"], ["Cookie", "evil=1"], ["Referer", "http://evil/"],
+              ["Proxy-Foo", "1"], ["X-Empty", ""]]
+  })).json();
+  eq([e.headers["x-a"], e.headers["proxy-foo"], e.headers["x-empty"]], ["1, 2", undefined, ""]);
+  if ((e.headers.cookie || "").includes("evil")) {
+    throw new Error("forbidden Cookie header sent");
+  }
+  eq(e.headers.referer, location.href, "referer");
+  eq(e.headers.origin, undefined, "no origin on same origin GET");
+});
+
+test("fetch hides set-cookie", async () => {
+  const r = await fetch("/api/echo");
+  eq([r.headers.get("set-cookie"), r.headers.get("x-custom")], [null, "custom"]);
+});
+
+test("fetch redirects", async () => {
+  let r = await fetch("/api/redirect?code=302&to=/api/echo", { method: "POST", body: "x" });
+  let e = await r.json();
+  eq([r.redirected, r.url, e.method, e.bodyLength], [true, location.origin + "/api/echo", "GET", 0]);
+  r = await fetch("/api/redirect?code=307&to=/api/echo", { method: "POST", body: "kept" });
+  e = await r.json();
+  eq([e.method, e.body], ["POST", "kept"]);
+  r = await fetch("/api/redirect?code=303&to=/api/echo", { method: "PUT", body: "x" });
+  eq((await r.json()).method, "GET");
+  await rejects(fetch("/api/redirect?to=/api/echo", { redirect: "error" }), "TypeError");
+});
+
+test("fetch redirect loop", async () => {
+  await rejects(fetch("/api/loop"), "TypeError");
+});
+
+test("fetch data URL", async () => {
+  const r = await fetch("data:text/plain;charset=utf-8,hello%20data");
+  eq([r.status, await r.text()], [200, "hello data"]);
+});
+
+test("fetch file URL refused", async () => {
+  await rejects(fetch("file:///etc/passwd"), "TypeError");
+});
+
+test("fetch big body", async () => {
+  const b = await (await fetch("/api/big?n=3000000")).arrayBuffer();
+  eq(b.byteLength, 3000000);
+});
+
+test("fetch abort", async () => {
+  const c = new AbortController();
+  const start = Date.now();
+  const p = fetch("/api/slow?ms=3000", { signal: c.signal });
+  setTimeout(() => c.abort(), 50);
+  await rejects(p, "AbortError");
+  if (Date.now() - start > 1500) {
+    throw new Error("abort took too long");
+  }
+  await rejects(fetch("/api/json", { signal: AbortSignal.abort() }), "AbortError");
+});
+
+test("fetch charset", async () => {
+  const r = await fetch("/api/latin1");
+  /* fetch text() is always UTF-8 */
+  eq((await r.clone().text()).length, 10);
+  eq(new TextDecoder().decode(await r.arrayBuffer()).includes("caf"), true);
+});
+
+/* CORS */
+
+test("cors refused without ACAO", async () => {
+  await rejects(fetch(OTHER + "/api/echo"), "TypeError");
+});
+
+test("cors simple with ACAO *", async () => {
+  const r = await fetch(OTHER + "/api/cors?acao=*");
+  eq([r.type, r.status, r.headers.get("content-type"), r.headers.get("x-custom")],
+     ["cors", 200, "application/json", null]);
+  const e = await r.json();
+  eq(e.headers.origin, location.origin, "origin header");
+  const r2 = await fetch(OTHER + "/api/cors?acao=*&aceh=X-Custom");
+  eq(r2.headers.get("x-custom"), "custom");
+});
+
+test("cors ACAO mismatch", async () => {
+  await rejects(fetch(OTHER + "/api/cors?acao=http://example.com"), "TypeError");
+});
+
+test("cors preflight", async () => {
+  await fetch("/api/log?clear=1");
+  const r = await fetch(OTHER + "/api/cors?acao=*&acah=X-Test,content-type", {
+    method: "POST", body: "{}", headers: { "X-Test": "1", "Content-Type": "application/json" }
+  });
+  const e = await r.json();
+  eq([e.method, e.headers["x-test"]], ["POST", "1"]);
+  const log = await (await fetch("/api/log")).json();
+  const pf = log.filter((l) => l.port === 8702);
+  eq(pf.map((l) => l.method), ["OPTIONS", "POST"], "requests");
+});
+
+test("cors preflight refused", async () => {
+  await rejects(fetch(OTHER + "/api/cors?acao=*", { headers: { "X-Test": "1" } }), "TypeError");
+  await rejects(fetch(OTHER + "/api/cors?acao=*", { method: "PUT" }), "TypeError");
+  const r = await fetch(OTHER + "/api/cors?acao=*&acam=PUT", { method: "PUT" });
+  eq((await r.json()).method, "PUT");
+});
+
+test("cors redirect to other origin", async () => {
+  const to = encodeURIComponent(OTHER + "/api/cors?acao=*");
+  const r = await fetch("/api/redirect?to=" + to);
+  eq([r.type, r.redirected], ["cors", true]);
+  await rejects(fetch("/api/redirect?to=" + encodeURIComponent(OTHER + "/api/echo")), "TypeError");
+});
+
+test("same-origin mode", async () => {
+  await rejects(fetch(OTHER + "/api/cors?acao=*", { mode: "same-origin" }), "TypeError");
+});
+
+/* credentials */
+
+test("cookies", async () => {
+  await fetch("/api/setcookie?name=sess&value=abc");
+  eq((await (await fetch("/api/cookies")).json()).sess, "abc", "same origin");
+  eq((await (await fetch("/api/cookies", { credentials: "omit" })).json()).sess, undefined, "omit");
+  await fetch("/api/setcookie?name=omitted&value=1", { credentials: "omit" });
+  eq((await (await fetch("/api/cookies")).json()).omitted, undefined, "omit does not store");
+  const other = await (await fetch(OTHER + "/api/cookies?acao=*")).json();
+  eq(other.sess, undefined, "cross origin default");
+  const inc = await (await fetch(OTHER + "/api/cookies?acao=$origin&acac=true", { credentials: "include" })).json();
+  eq(inc.sess, "abc", "cross origin include");
+  await rejects(fetch(OTHER + "/api/cookies?acao=*", { credentials: "include" }), "TypeError");
+  await rejects(fetch(OTHER + "/api/cookies?acao=$origin", { credentials: "include" }), "TypeError");
+});
+
+/* classes */
+
+test("Headers", () => {
+  const h = new Headers({ "B": "2", "a": "1" });
+  h.append("b", "3");
+  eq([...h], [["a", "1"], ["b", "2, 3"]]);
+  h.set("B", "4");
+  eq([h.get("b"), h.has("A")], ["4", true]);
+  h.delete("a");
+  eq([...h.keys()], ["b"]);
+  let threw = false;
+  try { h.append("bad name", "x"); } catch (e) { threw = e instanceof TypeError; }
+  eq(threw, true, "bad name throws");
+});
+
+test("Response", async () => {
+  const r = new Response("body", { status: 201, statusText: "Made", headers: { "X-A": "1" } });
+  eq([r.status, r.statusText, r.ok, r.type, r.headers.get("content-type")],
+     [201, "Made", true, "default", "text/plain;charset=UTF-8"]);
+  const c = r.clone();
+  eq([await r.text(), await c.text()], ["body", "body"]);
+  const j = Response.json({ x: 1 });
+  eq([j.headers.get("content-type"), await j.json()], ["application/json", { x: 1 }]);
+  eq(Response.error().type, "error");
+  eq((await new Response(new Blob(["ab"])).arrayBuffer()).byteLength, 2);
+});
+
+test("Request", async () => {
+  const r = new Request("/api/echo?q", { method: "post", body: "x", headers: { "X-Q": "1" } });
+  eq([r.method, r.url, r.headers.get("x-q"), r.credentials, r.mode],
+     ["POST", location.origin + "/api/echo?q", "1", "same-origin", "cors"]);
+  const e = await (await fetch(r)).json();
+  eq([e.method, e.body, e.headers["x-q"]], ["POST", "x", "1"]);
+  eq(r.bodyUsed, true);
+});
+
+test("EventTarget and AbortSignal", () => {
+  const t = new EventTarget();
+  let n = 0;
+  const f = (e) => { n += e.target === t ? 1 : 100; };
+  t.addEventListener("x", f);
+  t.addEventListener("x", f);
+  t.addEventListener("y", f, { once: true });
+  t.dispatchEvent(new Event("x"));
+  t.dispatchEvent(new Event("y"));
+  t.dispatchEvent(new Event("y"));
+  eq(n, 2, "listener calls");
+  class Sub extends EventTarget {}
+  const s = new Sub();
+  let got = false;
+  s.addEventListener("z", () => { got = true; });
+  s.dispatchEvent(new Event("z"));
+  eq([got, s instanceof EventTarget, document.body instanceof EventTarget], [true, true, true]);
+  const c = new AbortController();
+  let aborted = 0;
+  c.signal.onabort = () => aborted++;
+  c.abort("why");
+  c.abort();
+  eq([c.signal.aborted, c.signal.reason, aborted], [true, "why", 1]);
+});
+
+/* XMLHttpRequest */
+
+test("xhr GET", async () => {
+  const { x, events } = await xhr("GET", "/api/json");
+  eq(events, ["rs1", "loadstart", "rs2", "rs3", "progress", "rs4", "load", "loadend"]);
+  eq([x.status, x.statusText, x.readyState, x.responseURL], [200, "OK", 4, location.origin + "/api/json"]);
+  eq(JSON.parse(x.responseText).a, 1);
+  eq(x.getResponseHeader("Content-Type"), "application/json");
+  if (!/^content-length: \d+\r\ncontent-type: application\/json\r\n/.test(x.getAllResponseHeaders())) {
+    throw new Error("headers " + JSON.stringify(x.getAllResponseHeaders()));
+  }
+});
+
+test("xhr onload and onreadystatechange", async () => {
+  const x = new XMLHttpRequest();
+  const states = [];
+  x.onreadystatechange = () => states.push(x.readyState);
+  await new Promise((resolve) => {
+    x.onload = resolve;
+    x.open("GET", "/api/json");
+    x.send();
+  });
+  eq(states, [1, 2, 3, 4]);
+});
+
+test("xhr POST with headers", async () => {
+  const { x } = await xhr("POST", "/api/echo", (r) => {
+    r.setRequestHeader("X-One", "1");
+    r.setRequestHeader("X-One", "2");
+    r.setRequestHeader("Content-Type", "application/json");
+    r.send('{"p":1}');
+  });
+  const e = JSON.parse(x.responseText);
+  eq([e.method, e.body, e.headers["x-one"], e.headers["content-type"]], ["POST", '{"p":1}', "1, 2", "application/json"]);
+});
+
+test("xhr responseType", async () => {
+  let { x } = await xhr("GET", "/api/json", (r) => { r.responseType = "json"; r.send(); });
+  eq(x.response.b, [1, 2, 3]);
+  ({ x } = await xhr("GET", "/api/json", (r) => { r.responseType = "arraybuffer"; r.send(); }));
+  eq(x.response instanceof ArrayBuffer && x.response.byteLength > 10, true);
+  ({ x } = await xhr("GET", "/api/json", (r) => { r.responseType = "blob"; r.send(); }));
+  eq([x.response instanceof Blob, x.response.type], [true, "application/json"]);
+});
+
+test("xhr charset", async () => {
+  const { x } = await xhr("GET", "/api/latin1");
+  eq(x.responseText, "café naïve");
+});
+
+test("xhr status 404", async () => {
+  const { x, events } = await xhr("GET", "/api/status/404");
+  eq([x.status, x.responseText, events.includes("load")], [404, "status 404", true]);
+});
+
+test("xhr cross origin error", async () => {
+  const { x, events } = await xhr("GET", OTHER + "/api/echo");
+  eq([x.status, x.readyState, events.slice(-3)], [0, 4, ["rs4", "error", "loadend"]]);
+});
+
+test("xhr cross origin allowed", async () => {
+  const { x } = await xhr("GET", OTHER + "/api/cors?acao=*");
+  eq(x.status, 200);
+});
+
+test("xhr abort", async () => {
+  const { x, events } = await xhr("GET", "/api/slow?ms=2000", (r) => {
+    r.send();
+    setTimeout(() => r.abort(), 50);
+  });
+  eq([events.slice(-3), x.readyState, x.status], [["rs4", "abort", "loadend"], 0, 0]);
+});
+
+test("xhr timeout", async () => {
+  const { events } = await xhr("GET", "/api/slow?ms=2000", (r) => {
+    r.timeout = 100;
+    r.send();
+  });
+  eq(events.slice(-2), ["timeout", "loadend"]);
+});
+
+test("xhr sync refused", () => {
+  const x = new XMLHttpRequest();
+  let name = "";
+  try { x.open("GET", "/api/json", false); } catch (e) { name = e.name; }
+  eq(name, "InvalidAccessError");
+});
+
+test("xhr withCredentials", async () => {
+  const { x } = await xhr("GET", OTHER + "/api/cookies?acao=$origin&acac=true", (r) => {
+    r.withCredentials = true;
+    r.send();
+  });
+  eq(JSON.parse(x.responseText).sess, "abc");
+});
+
+(async () => {
+  for (const [name, fn] of tests) {
+    try {
+      await fn();
+      console.log("PASS " + name);
+    } catch (e) {
+      console.log("FAIL " + name + " " + e.message);
+    }
+  }
+  console.log("DONE");
+})();
+</script></body></html>

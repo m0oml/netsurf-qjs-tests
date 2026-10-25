@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><head><title>attr</title></head><body>
+<div id="d" class="a b" data-x="1" title="t&quot;q">x</div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+var d = document.getElementById("d");
+check("attributes length", function () { return d.attributes.length === 4 || d.attributes.length; });
+check("attr name/value", function () { var out = []; for (var i = 0; i < d.attributes.length; i++) { var a = d.attributes.item(i); out.push(a.name + "=" + a.value); } out.sort(); return out.join(";") === 'class=a b;data-x=1;id=d;title=t"q' || out.join(";"); });
+check("attr instanceof", function () { var a = d.attributes.item(0); return (a instanceof Attr && a instanceof Node) || String(a); });
+check("attr nodeType", function () { return d.attributes.item(0).nodeType === 2 || d.attributes.item(0).nodeType; });
+check("getNamedItem", function () { return d.attributes.getNamedItem("data-x").value === "1"; });
+check("attr set value", function () { d.attributes.getNamedItem("data-x").value = "2"; return d.getAttribute("data-x") === "2" || d.getAttribute("data-x"); });
+check("ownerElement", function () { return d.attributes.getNamedItem("id").ownerElement === d; });
+check("localName", function () { return d.attributes.getNamedItem("title").localName === "title"; });
+console.log("DONE");
+</script></body></html>

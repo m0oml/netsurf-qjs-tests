@@ -1,0 +1,8 @@
+<html><body><form id="f"><input name="a" value="1"><input type="checkbox" name="c" checked><select name="s"><option>x</option></select><textarea name="t">tt</textarea></form><script>
+const out = [];
+for (const n of ["Blob","File","FormData","AbortController","AbortSignal","Headers","Request","Response","fetch","XMLHttpRequest","ReadableStream","EventTarget","queueMicrotask","structuredClone"]) out.push(n + "=" + typeof globalThis[n]);
+out.push("baseURI=" + document.baseURI, "URL=" + document.URL, "origin=" + location.origin);
+try { new EventTarget(); out.push("ET ctor ok"); } catch (e) { out.push("ET ctor " + e); }
+const f = document.getElementById("f"); out.push("elements=" + (f.elements && f.elements.length));
+console.log(out.join(" | "));
+</script></body></html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><style>.big{height:120px}.hidden{display:none}</style></head><body><div id="b">x</div><script>
+document.addEventListener("DOMContentLoaded", () => setTimeout(() => {
+  const b = document.getElementById("b");
+  console.log("h0 " + b.offsetHeight);
+  b.classList.add("big");
+  console.log("h1 " + b.offsetHeight);
+  b.classList.add("hidden");
+  console.log("h2 " + b.offsetHeight + " class=" + b.className);
+  setTimeout(() => console.log("h3 later " + b.offsetHeight), 100);
+}, 50));
+</script></body></html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>net visual</title><style>
+body { font-size: 22px } li { margin: 4px } .err { color: red } .ok { color: green }
+</style></head><body>
+<h2>Loaded with fetch and XMLHttpRequest</h2>
+<ul id="list"><li>loading...</li></ul>
+<p id="xhr">xhr: pending</p>
+<p id="cors">cors: pending</p>
+<script>
+/* needs qjs-tests/net-server.py */
+fetch("/api/json").then(r => r.json()).then(j => {
+  const ul = document.getElementById("list");
+  ul.textContent = "";
+  for (const [k, v] of Object.entries(j)) {
+    const li = document.createElement("li");
+    li.className = "ok";
+    li.textContent = `${k} = ${JSON.stringify(v)}`;
+    ul.append(li);
+  }
+});
+const x = new XMLHttpRequest();
+x.open("GET", "/api/latin1");
+x.onload = () => { const p = document.getElementById("xhr"); p.className = "ok"; p.textContent = "xhr: " + x.status + " " + x.responseText; };
+x.send();
+fetch("http://" + location.hostname + ":8702/api/echo").catch(e => { const p = document.getElementById("cors"); p.className = "err"; p.textContent = "cors blocked as expected: " + e.message; });
+</script></body></html>

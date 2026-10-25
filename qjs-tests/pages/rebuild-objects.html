@@ -1,0 +1,27 @@
+<!DOCTYPE html><html><head><title>objects after a rebuild</title></head><body>
+<p>a<svg id="s" width="40" height="20"><rect width="40" height="20" fill="blue"/></svg>b <img id="i" src="red.png"></p><div id="h"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const sz = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.width + "x" + r.height; };
+window.addEventListener("load", () => {
+  const before = { s: sz("s"), i: sz("i") };
+  document.getElementById("h").textContent = "changed";
+  // a slow machine takes a while to lay out again, so wait for the sizes
+  const started = Date.now();
+  const wait = () => {
+    if ((sz("i") !== before.i || sz("s") !== before.s) && Date.now() - started < 5000) {
+      setTimeout(wait, 100);
+      return;
+    }
+    check("image keeps its size", () => eq(sz("i"), before.i));
+    check("inline svg keeps its size", () => eq(sz("s"), before.s));
+    check("sizes were known", () => before.i !== "0x0" && before.s === "40x20" || JSON.stringify(before));
+    console.log("DONE");
+  };
+  setTimeout(wait, 300);
+});
+</script></body></html>

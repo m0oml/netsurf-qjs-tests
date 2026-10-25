@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><title>rebuild stress</title>
+<style>
+.menu { display: none } .open .menu { display: block }
+.hide { display: none }
+</style></head><body>
+<div id="nav"><span class="menu" id="menu">menu</span></div>
+<img id="img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="10" height="10">
+<form id="f"><input id="name" name="n" value="start"><textarea id="ta">text</textarea>
+<select id="sel"><option value="a">A</option><option value="b">B</option></select></form>
+<input id="loose" value="formless">
+<iframe id="frame" src="frames/inner.html" width="200" height="50"></iframe>
+<ul id="list"></ul>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const list = document.getElementById("list");
+let ticks = 0;
+const t = setInterval(() => {
+  ticks++;
+  const li = document.createElement("li");
+  li.textContent = "item " + ticks;
+  list.append(li);
+  if (ticks % 3 === 0) list.firstElementChild && list.firstElementChild.remove();
+  document.getElementById("nav").classList.toggle("open");
+  document.getElementById("menu").classList.toggle("hide", ticks % 4 === 0);
+  document.getElementById("name").value = "value " + ticks;
+  document.getElementById("ta").value = "textarea " + ticks;
+  const sel = document.getElementById("sel");
+  if (ticks === 5) { const o = document.createElement("option"); o.value = "c"; o.textContent = "C"; sel.append(o); }
+  if (ticks === 10) document.getElementById("frame").remove();
+  if (ticks === 12) { document.getElementById("img").src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; }
+  if (ticks === 20) {
+    clearInterval(t);
+    // a burst of changes in one task
+    for (let i = 0; i < 200; i++) { const s = document.createElement("span"); s.textContent = i; list.append(s); }
+    setTimeout(() => {
+      check("list items", () => list.children.length === 214 || list.children.length);
+      check("input value kept", () => document.getElementById("name").value === "value 20");
+      check("textarea value kept", () => document.getElementById("ta").value === "textarea 20");
+      check("select options", () => document.getElementById("sel").options === undefined || document.querySelectorAll("#sel option").length === 3);
+      check("formless input", () => document.getElementById("loose").value === "formless");
+      check("frame removed", () => document.getElementById("frame") === null);
+      console.log("DONE");
+    }, 200);
+  }
+}, 20);
+</script>
+</body></html>

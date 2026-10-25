@@ -1,0 +1,16 @@
+<html><body><div id="a">x</div>
+<script>
+var d = document.getElementById("a");
+var hits = [];
+d.addEventListener("ping", function (ev) { hits.push("listener:" + ev.type); }, false);
+var ev = document.createEvent("Event");
+console.log("createEvent: " + Object.prototype.toString.call(ev) + " type=" + typeof ev);
+try { ev.initEvent("ping", true, true); console.log("initEvent ok type=" + ev.type); } catch (e) { console.log("initEvent threw " + e); }
+try { var r = d.dispatchEvent(ev); console.log("dispatchEvent returned " + r); } catch (e) { console.log("dispatchEvent threw " + e); }
+console.log("hits=" + hits.join(","));
+d.onclick = function () { hits.push("onclick"); };
+var ev2 = document.createEvent("Event"); ev2.initEvent("click", true, true);
+d.dispatchEvent(ev2);
+console.log("hits after click=" + hits.join(","));
+console.log("DONE");
+</script></body></html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html><head><title>small bindings</title>
+<style id="st">.a { color: red; } .b { color: blue; }</style></head><body>
+<div id="host"><p id="p1">hello <b id="b1">world</b></p></div>
+<video id="v" src="clip.mp4"></video><audio id="au"><source id="s" src="a.ogg"></audio>
+<form id="rf" action="x" onsubmit="return false"><input name="a"><button id="rb">go</button></form>
+<script id="first">window.cs = document.currentScript && document.currentScript.id;</script>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+check("currentScript while running", () => eq(window.cs, "first"));
+check("currentScript inline", () => eq(document.currentScript.tagName, "SCRIPT"));
+check("createRange", () => { const r = document.createRange(); return eq([r.collapsed, r.startOffset, r.endOffset].join(), "true,0,0"); });
+check("range selectNodeContents", () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("b1")); return eq([r.toString(), r.startContainer.id, r.endOffset].join(), "world,b1,1"); });
+check("range selectNode", () => { const r = document.createRange(); r.selectNode(document.getElementById("b1")); return eq([r.startContainer.id, r.startOffset, r.endOffset].join(), "p1,1,2"); });
+check("range setStart/End text", () => { const t = document.getElementById("p1").firstChild; const r = document.createRange(); r.setStart(t, 1); r.setEnd(t, 4); return eq(r.toString(), "ell"); });
+check("range across nodes", () => { const p = document.getElementById("p1"); const r = document.createRange(); r.setStart(p.firstChild, 3); r.setEnd(document.getElementById("b1").firstChild, 2); return eq(r.toString(), "lo wo"); });
+check("range createContextualFragment", () => { const f = document.createRange().createContextualFragment("<i>x</i><u>y</u>"); return eq([f.nodeType, f.childNodes.length].join(), "11,2"); });
+check("range cloneContents", () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("p1")); return eq(r.cloneContents().textContent, "hello world"); });
+check("range deleteContents", () => { const d = document.createElement("div"); d.innerHTML = "ab<i>cd</i>ef"; const r = document.createRange(); r.setStart(d.firstChild, 1); r.setEnd(d.lastChild, 1); r.deleteContents(); return eq(d.textContent, "af"); });
+check("range collapse", () => { const r = document.createRange(); r.selectNodeContents(document.body); r.collapse(true); return eq(r.collapsed, true); });
+check("range getBoundingClientRect", () => eq(typeof document.createRange().getBoundingClientRect().width, "number"));
+check("range commonAncestor", () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("p1")); return eq(r.commonAncestorContainer.id, "p1"); });
+check("styleSheets length", () => eq(document.styleSheets.length >= 1, true));
+check("styleSheets cssRules", () => { const s = document.styleSheets[0]; return eq(s.cssRules.length, 2); });
+check("styleSheets insertRule", () => { const s = document.styleSheets[0]; s.insertRule(".c { color: green; }", 0); return eq(s.cssRules.length, 3); });
+check("style.sheet", () => eq(document.getElementById("st").sheet === document.styleSheets[0], true));
+check("video src", () => eq(document.getElementById("v").src.endsWith("/clip.mp4"), true));
+check("source src", () => eq(document.getElementById("s").src.endsWith("/a.ogg"), true));
+check("video canPlayType", () => eq(typeof document.getElementById("v").canPlayType("video/mp4"), "string"));
+const log = [];
+const rsc = []; document.addEventListener("readystatechange", () => rsc.push(document.readyState));
+check("customElements exists", () => eq(typeof customElements.define, "function"));
+class MyEl extends HTMLElement {
+  constructor() { super(); log.push("ctor"); }
+  connectedCallback() { log.push("connected:" + this.id); }
+  disconnectedCallback() { log.push("disconnected"); }
+  attributeChangedCallback(n, o, v) { log.push("attr:" + n + "=" + v); }
+  static get observedAttributes() { return ["foo"]; }
+}
+check("customElements.define", () => { customElements.define("my-el", MyEl); return eq(customElements.get("my-el") === MyEl, true); });
+check("createElement upgrade", () => { const e = document.createElement("my-el"); return eq(e instanceof MyEl, true); });
+check("new MyEl", () => { const e = new MyEl(); return eq(e.tagName, "MY-EL"); });
+check("connectedCallback", () => { log.length = 0; const e = document.createElement("my-el"); e.id = "m1"; document.body.appendChild(e); return eq(log.join(), "ctor,connected:m1"); });
+check("attributeChangedCallback", () => { log.length = 0; document.getElementById("m1").setAttribute("foo", "1"); return eq(log.join(), "attr:foo=1"); });
+check("disconnectedCallback", () => { log.length = 0; document.getElementById("m1").remove(); return eq(log.join(), "disconnected"); });
+check("upgrade existing", () => { const h = document.getElementById("host"); h.innerHTML = '<my-el id="m2"></my-el>'; const e = h.firstChild; return eq(e instanceof MyEl, true); });
+check("define after parse upgrades", () => { const h = document.getElementById("host"); h.innerHTML = '<late-el id="m3"></late-el>'; class L extends HTMLElement { connectedCallback() { this.dataset.up = "1"; } } customElements.define("late-el", L); return eq(document.getElementById("m3") instanceof L, true); });
+check("whenDefined", () => eq(typeof customElements.whenDefined("my-el").then, "function"));
+check("define invalid name throws", () => { try { customElements.define("bad", class extends HTMLElement {}); return "no throw"; } catch (e) { return true; } });
+check("define twice throws", () => { try { customElements.define("my-el", class extends HTMLElement {}); return "no throw"; } catch (e) { return true; } });
+check("innerHTML on custom", () => { const e = document.createElement("my-el"); e.innerHTML = "<b>x</b>"; return eq(e.firstChild.tagName, "B"); });
+check("getName", () => eq(customElements.getName ? customElements.getName(MyEl) : "my-el", "my-el"));
+check("Node.contains", () => eq([document.body.contains(document.getElementById("host")), document.getElementById("host").contains(document.body)].join(), "true,false"));
+check("isConnected", () => { const d = document.createElement("div"); const r = [d.isConnected]; document.body.appendChild(d); r.push(d.isConnected); d.remove(); return eq(r.join(), "false,true"); });
+check("rule style", () => { const s = document.styleSheets[0]; const r = s.cssRules[s.cssRules.length - 1]; return eq([r.selectorText, r.style.color, r.style.getPropertyValue("color")].join(), ".b,blue,blue"); });
+check("deleteRule", () => { const s = document.styleSheets[0]; const n = s.cssRules.length; s.deleteRule(0); return eq(s.cssRules.length, n - 1); });
+check("media rule", () => { const s = document.styleSheets[0]; s.insertRule("@media (min-width: 10px) { .z { color: red; } }", 0); const m = s.cssRules[0]; return eq([m.type, m.conditionText, m.cssRules.length, m.cssRules[0].selectorText].join(), "4,(min-width: 10px),1,.z"); });
+check("insertRule bad index", () => { try { document.styleSheets[0].insertRule("a{}", 999); return "no throw"; } catch (e) { return eq(e.name, "IndexSizeError"); } });
+check("attachShadow", () => { const h = document.createElement("div"); const r = h.attachShadow({ mode: "open" }); r.innerHTML = "<span id='ss'>in</span>"; return eq([h.shadowRoot === r, r.host === h, h.textContent, r.querySelector("#ss").tagName].join(), "true,true,in,SPAN"); });
+check("attachShadow twice", () => { const h = document.createElement("div"); h.attachShadow({ mode: "open" }); try { h.attachShadow({ mode: "open" }); return "no throw"; } catch (e) { return true; } });
+check("closed shadowRoot", () => { const h = document.createElement("div"); h.attachShadow({ mode: "closed" }); return eq(h.shadowRoot, null); });
+check("component with shadow", () => { class C extends HTMLElement { constructor() { super(); this.attachShadow({ mode: "open" }).innerHTML = "<b>shadow</b><slot></slot>"; } } customElements.define("shadow-el", C); const e = document.createElement("shadow-el"); document.body.appendChild(e); return eq(e.shadowRoot.querySelector("b").textContent, "shadow"); });
+check("Selection with range", () => { const r = document.createRange(); const w = document.createElement("b"); w.textContent = "world"; document.body.appendChild(w); r.selectNodeContents(w); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return eq([s.rangeCount, s.toString(), s.getRangeAt(0) === r].join(), "1,world,true"); });
+check("requestSubmit fires submit", () => { const f = document.getElementById("rf"); let n = 0; f.addEventListener("submit", (e) => { n++; e.preventDefault(); }); f.requestSubmit(); return eq(n, 1); });
+check("requestSubmit with onsubmit property", () => { const f = document.createElement("form"); let n = 0; f.onsubmit = (e) => { n++; return false; }; document.body.appendChild(f); f.requestSubmit(); return eq(n, 1); });
+check("requestSubmit submitter", () => { const f = document.getElementById("rf"); let by = null; f.addEventListener("submit", (e) => { by = e.submitter && e.submitter.id; e.preventDefault(); }); f.requestSubmit(document.getElementById("rb")); return eq(by, "rb"); });
+check("clearTimeout of junk", () => { clearTimeout(undefined); clearTimeout("x"); clearInterval(null); return true; });
+check("document.domain", () => eq(typeof document.domain, "string"));
+check("performance.mark", () => { performance.mark("a"); const m = performance.measure("m", "a"); return eq([m.entryType, performance.getEntriesByName("a").length, typeof m.duration].join(), "measure,1,number"); });
+check("String(location)", () => eq(String(location), location.href));
+check("URL with location base", () => eq(new URL("x.png", location).href.endsWith("/x.png"), true));
+check("navigator", () => eq([navigator.platform, navigator.vendor, navigator.language, navigator.languages.length, navigator.onLine, navigator.cookieEnabled].join(), navigator.platform + ",,en-GB,2,true,true"));
+check("navigator.clipboard rejects", () => typeof navigator.clipboard.writeText("x").catch(() => {}).then === "function");
+const tw = document.createElement("div"); tw.innerHTML = "<p>a<b>b</b></p><!--c--><i>d</i>";
+check("TreeWalker nextNode", () => { const w = document.createTreeWalker(tw, NodeFilter.SHOW_ELEMENT); const out = []; let n; while ((n = w.nextNode())) out.push(n.tagName); return eq(out.join(), "P,B,I"); });
+check("TreeWalker text", () => { const w = document.createTreeWalker(tw, NodeFilter.SHOW_TEXT); const out = []; while (w.nextNode()) out.push(w.currentNode.data); return eq(out.join(), "a,b,d"); });
+check("TreeWalker filter", () => { const w = document.createTreeWalker(tw, NodeFilter.SHOW_ELEMENT, { acceptNode: (n) => n.tagName === "B" ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); const out = []; while (w.nextNode()) out.push(w.currentNode.tagName); return eq(out.join(), "P,I"); });
+check("TreeWalker navigation", () => { const w = document.createTreeWalker(tw, NodeFilter.SHOW_ELEMENT); const a = w.firstChild().tagName; const b = w.nextSibling().tagName; const c = w.previousSibling().tagName; w.lastChild(); return eq([a, b, c, w.parentNode().tagName].join(), "P,I,P,P"); });
+check("TreeWalker previousNode", () => { const w = document.createTreeWalker(tw, NodeFilter.SHOW_ELEMENT); w.currentNode = tw.lastChild; const out = []; let n; while ((n = w.previousNode())) out.push(n.tagName); return eq(out.join(), "B,P,DIV"); });
+check("TreeWalker currentNode set", () => { const w = document.createTreeWalker(tw); w.currentNode = tw.firstChild; return eq(w.currentNode.tagName, "P"); });
+check("NodeIterator", () => { const it = document.createNodeIterator(tw, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT); const out = []; let n; while ((n = it.nextNode())) out.push(n.nodeType); return eq(out.join(), "1,1,1,8,1"); });
+check("NodeIterator previous", () => { const it = document.createNodeIterator(tw, NodeFilter.SHOW_ELEMENT); it.nextNode(); it.nextNode(); it.nextNode(); it.previousNode(); return eq(it.previousNode().tagName, "P"); });
+check("XPathEvaluator", () => eq(new XPathEvaluator().evaluate("//a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotLength, 0));
+check("importNode", () => { const t = document.createElement("template"); t.innerHTML = "<p>x</p>"; const n = document.importNode(t.content, true); return eq([n.nodeType, n.firstChild.tagName, n.firstChild !== t.content.firstChild].join(), "11,P,true"); });
+check("adoptNode", () => { const d = document.createElement("div"); const p = document.createElement("p"); d.appendChild(p); return eq([document.adoptNode(p) === p, d.childNodes.length].join(), "true,0"); });
+check("CDATASection", () => eq(typeof CDATASection, "function"));
+check("createEvent CustomEvent", () => { const e = document.createEvent("CustomEvent"); e.initCustomEvent("foo", true, true, { a: 1 }); let got = null; document.addEventListener("foo", (x) => { got = x.detail.a; }); document.dispatchEvent(e); return eq([e instanceof CustomEvent, e.type, e.bubbles, got].join(), "true,foo,true,1"); });
+check("createEvent MouseEvent", () => { const e = document.createEvent("MouseEvent"); e.initMouseEvent("click", true, true, window, 1, 0, 0, 5, 6, false, false, true, false, 0, null); return eq([e.type, e.clientX, e.clientY, e.shiftKey].join(), "click,5,6,true"); });
+check("createEvent KeyboardEvent", () => { const e = document.createEvent("KeyboardEvent"); e.initKeyboardEvent("keydown", true, true, window, "a", 0, false, false, false, false); return eq([e.type, e.key].join(), "keydown,a"); });
+check("createEvent unknown", () => { try { document.createEvent("Bogus"); return "no throw"; } catch (e) { return eq(e.name, "NotSupportedError"); } });
+check("HTMLSlotElement", () => { const s = document.createElement("slot"); s.innerHTML = "<b>fb</b>"; return eq([s instanceof HTMLSlotElement, s.assignedNodes().length, s.assignedElements({ flatten: true }).length, document.body instanceof HTMLSlotElement].join(), "true,0,1,false"); });
+// restyling happens after the script, so these read the result later
+const s0 = document.styleSheets[0];
+const rl = s0.cssRules[s0.cssRules.length - 1];
+rl.style.color = "rgb(1, 2, 3)";
+document.body.insertAdjacentHTML("beforeend", '<i class="b" id="bb">x</i><p class="q" id="qq">x</p>');
+s0.insertRule("#bb { margin-left: 7px; }", s0.cssRules.length);
+const ad = new CSSStyleSheet(); ad.replaceSync(".q { margin-top: 9px; }"); document.adoptedStyleSheets = [ad];
+// the restyle and the load take longer on a slow machine, so these retry
+function eventually(name, fn, ms = 8000) {
+  const start = Date.now();
+  (function attempt() {
+    let r;
+    try { r = fn(); } catch (e) { r = String(e); }
+    if (r === true || Date.now() - start > ms) { check(name, () => r); finished(); } else { setTimeout(attempt, 100); }
+  })();
+}
+let waiting = 4;
+function finished() { if (--waiting === 0) console.log("DONE"); }
+eventually("rule style set applies", () => eq(getComputedStyle(document.getElementById("bb")).color, "rgb(1, 2, 3)"));
+eventually("insertRule applies", () => eq(getComputedStyle(document.getElementById("bb")).marginLeft, "7px"));
+eventually("adoptedStyleSheets applies", () => eq(getComputedStyle(document.getElementById("qq")).marginTop, "9px"));
+eventually("readystatechange", () => eq(rsc.join(), "interactive,complete"));
+</script></body></html>

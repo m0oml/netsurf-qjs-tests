@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><title>perf</title></head><body><div id="root"></div>
+<script>
+var root = document.getElementById("root");
+var html = [];
+for (var i = 0; i < 500; i++) {
+  html.push('<div class="row r' + (i % 7) + '"><span class="cell">a</span><span class="cell b">b</span><a href="#' + i + '">l</a></div>');
+}
+root.innerHTML = html.join("");
+function time(name, fn, reps) {
+  var t0 = Date.now(), r;
+  for (var i = 0; i < reps; i++) { r = fn(); }
+  console.log("PERF " + name + ": " + ((Date.now() - t0) / reps).toFixed(2) + " ms (" + (r && r.length !== undefined ? r.length : r) + ")");
+}
+time("count elements", function () { return document.getElementsByTagName("*").length; }, 1);
+time("qsa .cell", function () { return document.querySelectorAll(".cell"); }, 5);
+time("qsa div.r3 > span.b", function () { return document.querySelectorAll("div.r3 > span.b"); }, 5);
+time("qsa a[href^='#4']", function () { return document.querySelectorAll("a[href^='#4']"); }, 5);
+time("qs #root", function () { return document.querySelector("#root") ? 1 : 0; }, 20);
+var last = document.querySelectorAll("a"); last = last[last.length - 1];
+time("closest .row x100", function () { var n = 0; for (var k = 0; k < 100; k++) { if (last.closest(".row")) n++; } return n; }, 1);
+console.log("DONE");
+</script></body></html>

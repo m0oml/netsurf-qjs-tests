@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><title>layout at load: controls</title></head><body>
+<textarea id="ta" style="width:200px;height:50px">hello</textarea>
+<select id="sel"><option>one</option><option selected>two</option></select>
+<iframe id="fr" src="trivial.html" style="width:150px;height:60px"></iframe>
+<object id="ob" data="red.png" type="image/png"></object>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+var early = {};
+document.addEventListener("DOMContentLoaded", () => {
+  early.ta = document.getElementById("ta").offsetWidth;
+  early.fr = document.getElementById("fr").offsetWidth;
+  // a second change and measurement rebuilds the early tree
+  document.getElementById("ta").value = "changed";
+  document.body.appendChild(document.createElement("p")).textContent = "more";
+  early.ta2 = document.getElementById("ta").offsetWidth;
+});
+window.addEventListener("load", () => setTimeout(() => {
+  check("early textarea", () => early.ta >= 200 || early.ta);
+  check("early iframe", () => early.fr >= 150 || early.fr);
+  check("early after change", () => eq(early.ta2, early.ta));
+  check("textarea value", () => eq(document.getElementById("ta").value, "changed"));
+  check("iframe laid out", () => eq(document.getElementById("fr").offsetHeight >= 60, true));
+  check("object laid out", () => eq(document.getElementById("ob").offsetWidth > 0, true));
+  console.log("DONE");
+}, 200));
+</script>
+</body></html>

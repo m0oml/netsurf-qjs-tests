@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head><title>  Web   compat </title></head><body>
+<div id="host" data-user-id="42" data-x="y"><p id="p1">one</p><p id="p2">two</p></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const host = document.getElementById("host");
+check("self/top/parent", () => self === window && top === window && parent === window && globalThis.self === window);
+check("btoa/atob", () => eq(atob(btoa("helloÿ")), "helloÿ") === true && eq(btoa("abc"), "YWJj"));
+check("atob invalid throws DOMException", () => { try { atob("@@"); return "no"; } catch (e) { return e instanceof DOMException && e.name === "InvalidCharacterError"; } });
+check("btoa range throws", () => { try { btoa("Ā"); return "no"; } catch (e) { return e.name === "InvalidCharacterError"; } });
+check("title", () => eq(document.title, "Web compat"));
+check("title set", () => { document.title = "New"; return eq(document.title, "New"); });
+check("children", () => eq(host.children.length, 2) === true && host.children[1].id === "p2");
+check("document children", () => eq(document.children.length, 1) === true && document.firstElementChild === document.documentElement);
+check("append strings+nodes", () => { const d = document.createElement("div"); d.append("a", document.createElement("b"), "c"); return eq(d.innerHTML, "a<b></b>c"); });
+check("prepend", () => { const d = document.createElement("div"); d.append("x"); d.prepend("w"); return eq(d.textContent, "wx"); });
+check("before/after/remove", () => { const p = document.getElementById("p1"); const s = document.createElement("span"); p.after(s); const ok = p.nextSibling === s; s.remove(); return ok && s.parentNode === null; });
+check("replaceWith", () => { const d = document.createElement("div"); const a = document.createElement("a"); d.append(a); a.replaceWith("t"); return eq(d.innerHTML, "t"); });
+check("replaceChildren", () => { const d = document.createElement("div"); d.append("a", "b"); d.replaceChildren("c"); return eq(d.innerHTML, "c"); });
+check("innerHTML roundtrip", () => { const d = document.createElement("div"); d.innerHTML = '<p class="a">x &amp; y<br>z</p><!--c-->'; return eq(d.innerHTML, '<p class="a">x &amp; y<br>z</p><!--c-->'); });
+check("outerHTML", () => eq(document.getElementById("p1").outerHTML, '<p id="p1">one</p>'));
+check("outerHTML set", () => { const d = document.createElement("div"); d.innerHTML = "<i>a</i>"; d.firstChild.outerHTML = "<b>c</b><u>d</u>"; return eq(d.innerHTML, "<b>c</b><u>d</u>"); });
+check("insertAdjacentHTML", () => { const d = document.createElement("div"); d.innerHTML = "<i>m</i>"; d.firstChild.insertAdjacentHTML("afterend", "<b>n</b>"); d.firstChild.insertAdjacentHTML("afterbegin", "s"); return eq(d.innerHTML, "<i>sm</i><b>n</b>"); });
+check("text data", () => { const t = document.createTextNode("abc"); t.data = "xyz"; t.appendData("!"); t.insertData(0, ">"); t.deleteData(1, 1); return eq(t.data + t.length + t.substringData(1, 2), ">yz!4yz"); });
+check("splitText", () => { const d = document.createElement("div"); d.textContent = "hello"; const r = d.firstChild.splitText(2); return eq(d.childNodes.length + ":" + r.data + ":" + d.firstChild.wholeText, "2:llo:hello"); });
+check("dataset get", () => eq(host.dataset.userId, "42"));
+check("dataset set", () => { host.dataset.fooBar = "baz"; return eq(host.getAttribute("data-foo-bar"), "baz"); });
+check("dataset keys", () => eq(Object.keys(host.dataset).sort().join(), "fooBar,userId,x"));
+check("dataset delete", () => { delete host.dataset.fooBar; return eq(host.hasAttribute("data-foo-bar"), false); });
+check("hidden", () => { host.hidden = true; const a = host.hasAttribute("hidden"); host.hidden = false; return a && !host.hidden; });
+check("new Event", () => { const e = new Event("x", { bubbles: true }); return e instanceof Event && e.type === "x" && e.bubbles === true && e.cancelable === false; });
+check("new CustomEvent detail", () => { const e = new CustomEvent("y", { detail: { a: 1 } }); return e instanceof CustomEvent && e instanceof Event && e.detail.a === 1; });
+check("CustomEvent dispatch", () => { let got = null; host.addEventListener("hi", (e) => { got = e.detail; }); host.dispatchEvent(new CustomEvent("hi", { detail: 7 })); return eq(got, 7); });
+check("MouseEvent", () => { const e = new MouseEvent("click", { clientX: 5, ctrlKey: true }); return e instanceof MouseEvent && e instanceof UIEvent && e.clientX === 5 && e.ctrlKey === true && e.button === 0; });
+check("KeyboardEvent", () => { const e = new KeyboardEvent("keydown", { key: "a" }); return e.key === "a" && e instanceof KeyboardEvent; });
+check("Event needs new", () => { try { Event("x"); return "no"; } catch (e) { return e instanceof TypeError; } });
+check("click()", () => { let n = 0; host.addEventListener("click", () => n++); host.click(); return eq(n, 1); });
+check("localStorage", () => { localStorage.setItem("k", 1); return localStorage.getItem("k") === "1" && localStorage.length === 1 && localStorage.k === "1" && localStorage.getItem("none") === null; });
+check("localStorage clear", () => { localStorage.clear(); return eq(localStorage.length, 0); });
+check("history.pushState", () => { history.pushState({ a: 1 }, "", "#x"); return eq(history.state.a, 1); });
+check("matchMedia", () => matchMedia("(min-width: 600px)").matches === true && matchMedia("(max-width: 600px)").matches === false && matchMedia("(prefers-color-scheme: dark)").matches === false);
+check("getComputedStyle", () => eq(getComputedStyle(host).display, ""));
+check("getBoundingClientRect", () => { const r = host.getBoundingClientRect(); return r instanceof DOMRect && r.width === 0 && r.top === 0; });
+check("TextEncoder", () => eq(Array.from(new TextEncoder().encode("\u00e9\u20ac")).join(), "195,169,226,130,172"));
+check("TextDecoder", () => eq(new TextDecoder().decode(new Uint8Array([0xf0, 0x9f, 0x98, 0x80, 0x41])), "\u{1F600}A"));
+check("CSS.escape", () => eq(CSS.escape("1a b"), "\\31 a\\ b"));
+check("getAttributeNames", () => eq(host.getAttributeNames().sort().join(), "data-user-id,data-x,id"));
+check("toggleAttribute", () => host.toggleAttribute("x") === true && host.hasAttribute("x") && host.toggleAttribute("x") === false);
+check("structuredClone", () => { const o = { a: [1] }; const c = structuredClone(o); return c.a[0] === 1 && c !== o; });
+check("MutationObserver constructs", () => { const m = new MutationObserver(() => {}); m.observe(host, { childList: true }); m.disconnect(); return true; });
+let raf = false, io = false, micro = false;
+requestAnimationFrame((t) => { raf = typeof t === "number"; });
+new IntersectionObserver((entries) => { io = entries[0].isIntersecting; }).observe(host);
+queueMicrotask(() => { micro = true; });
+setTimeout(() => {
+  check("requestAnimationFrame", () => raf);
+  check("IntersectionObserver", () => io);
+  check("queueMicrotask", () => micro);
+  console.log("DONE");
+}, 100);
+</script></body></html>

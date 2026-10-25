@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><title>:placeholder-shown</title><style>
+.y { width: 100px; height: 20px }
+.y:placeholder-shown { width: 150px }
+.x { width: 80px; height: 20px }
+.x:not(:placeholder-shown) { width: 90px }
+</style></head><body>
+<input class="y" id="a" placeholder="search">
+<input class="y" id="b" placeholder="search" value="hi">
+<input class="y" id="c">
+<input class="y" id="d" placeholder="">
+<input class="y" id="e" placeholder="search" value="">
+<textarea class="y" id="f" placeholder="notes"></textarea>
+<textarea class="y" id="g" placeholder="notes">text</textarea>
+<input id="h" class="x" placeholder="search">
+<input id="i" class="x" placeholder="search" value="hi">
+<div class="y" id="j" placeholder="search" style="width:100px;height:20px"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const raw = (id) => parseFloat(getComputedStyle(document.getElementById(id)).width);
+// form controls report the border box, so measure against a plain one
+const pad = () => raw("c") - 100;
+const w = (id) => (raw(id) - pad()) + "px";
+document.addEventListener("DOMContentLoaded", () => {
+  check("empty with placeholder", () => eq(w("a"), "150px"));
+  check("has value", () => eq(w("b"), "100px"));
+  check("no placeholder", () => eq(w("c"), "100px"));
+  check("empty placeholder", () => eq(w("d"), "100px"));
+  check("empty value attribute", () => eq(w("e"), "150px"));
+  check("empty textarea", () => eq(raw("f") + "px", "150px"));
+  check("textarea with text", () => eq(raw("g") + "px", "100px"));
+  check(":not() shown", () => eq(w("h"), "80px"));
+  check(":not() not shown", () => eq(w("i"), "90px"));
+  check("not a control", () => eq(getComputedStyle(document.getElementById("j")).width, "100px"));
+  console.log("DONE");
+});
+</script></body></html>

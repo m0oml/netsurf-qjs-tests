@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><title>flex basis and growth in auto height columns</title><style>
+body { margin: 0 }
+.c { display: flex; flex-direction: column; width: 100px; margin-bottom: 10px }
+.c div { width: 20px; height: 30px }
+#a div { flex-basis: 100% }
+#b div { flex: 0 0 100% }
+#c div { flex-grow: 1 }
+#d div { flex: 1 1 0% }
+#e { flex-direction: column-reverse } #e div { flex-basis: 100% }
+#f { flex-direction: column-reverse } #f div { flex-grow: 1 }
+#g { flex-direction: column-reverse } #g div { flex: 1 1 0% }
+</style></head><body>
+<div id="a" class="c"><div></div><div></div></div>
+<div id="b" class="c"><div></div><div></div></div>
+<div id="c" class="c"><div></div><div></div></div>
+<div id="d" class="c"><div></div><div></div></div>
+<div id="e" class="c"><div></div><div></div></div>
+<div id="f" class="c"><div></div><div></div></div>
+<div id="g" class="c"><div></div><div></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const H = (id) => document.getElementById(id).getBoundingClientRect().height;
+const T = (id) => document.getElementById(id).getBoundingClientRect().top;
+window.addEventListener("load", () => {
+  for (const id of "abcdefg") {
+    check("height of " + id, () => { const h = H(id); return (h >= 0 && h < 1000) ? true : h; });
+  }
+  for (const id of "cdfg") {
+    check("grow item of " + id + " keeps its size", () => { const h = document.getElementById(id).firstElementChild.getBoundingClientRect().height; return h === 30 ? true : h; });
+  }
+  check("later containers follow", () => { const t = T("g"); return (t > 0 && t < 2000) ? true : t; });
+  console.log("DONE");
+});
+</script></body></html>

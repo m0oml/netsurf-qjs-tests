@@ -1,0 +1,13 @@
+<html><body><script>
+const step = async (name, p) => {
+  try { const r = await p; console.log(name + " -> " + r.status + " " + (await r.text()).slice(0, 50)); }
+  catch (e) { console.log(name + " error " + e); }
+};
+(async () => {
+  await step("302 post", fetch("/api/redirect?code=302&to=/api/echo", { method: "POST", body: "x" }));
+  await step("307 post", fetch("/api/redirect?code=307&to=/api/echo", { method: "POST", body: "kept" }));
+  await step("303 put", fetch("/api/redirect?code=303&to=/api/echo", { method: "PUT", body: "x" }));
+  await step("error mode", fetch("/api/redirect?to=/api/echo", { redirect: "error" }));
+  console.log("end");
+})();
+</script></body></html>

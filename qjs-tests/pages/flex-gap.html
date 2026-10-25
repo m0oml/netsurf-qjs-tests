@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><title>flex gap</title>
+<style>
+body { margin: 0; }
+.f { display: flex; width: 300px; margin-bottom: 10px; }
+.f > div { width: 50px; height: 20px; background: #ccc; }
+#f1 { column-gap: 10px; }
+#f2 { gap: 5px 20px; flex-wrap: wrap; width: 120px; }
+#f3 { column-gap: 10px; }
+#f3 > div { flex: 1; width: auto; }
+#f4 { flex-direction: column; row-gap: 8px; width: 100px; }
+#f5 { flex-direction: row-reverse; column-gap: 10px; }
+#f6, #f6b { display: inline-flex; }
+#f6 { column-gap: 15px; }
+.w { display: inline-block; width: 50px; height: 5px; }
+#g1, #g2, #f6b > div { width: auto; }
+#f7 { column-gap: 10%; }
+</style></head><body>
+<div class="f" id="f1"><div id="a1"></div><div id="a2"></div><div id="a3"></div></div>
+<div class="f" id="f2"><div id="b1"></div><div id="b2"></div><div id="b3"></div></div>
+<div class="f" id="f3"><div id="c1"></div><div id="c2"></div><div id="c3"></div></div>
+<div class="f" id="f4"><div id="d1"></div><div id="d2"></div></div>
+<div class="f" id="f5"><div id="e1"></div><div id="e2"></div></div>
+<div><div class="f" id="f6" style="width: auto"><div id="g1"><span class="w"></span></div><div id="g2"><span class="w"></span></div></div></div>
+<div><div class="f" id="f6b" style="width: auto; column-gap: 0"><div><span class="w"></span></div><div><span class="w"></span></div></div></div>
+<div class="f" id="f7"><div id="h1"></div><div id="h2"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => setTimeout(() => {
+  check("column-gap between items", () => (r("a1").left === 0 && r("a2").left === 60 && r("a3").left === 120) || [r("a1").left, r("a2").left, r("a3").left].join(","));
+  check("gap wraps lines", () => (r("b1").left === 0 && r("b2").left === 70 && r("b3").left === 0 && r("b3").top - r("b1").top === 25) || [r("b2").left, r("b3").left, r("b3").top - r("b1").top].join(","));
+  check("container height includes row gap", () => r("f2").height === 45 || r("f2").height);
+  check("gaps are not free space", () => (Math.abs(r("c1").width - 93.33) <= 1 && r("c2").left - r("c1").right <= 11 && r("c2").left - r("c1").right >= 9 && Math.abs(r("c3").right - 300) <= 2) || [r("c1").width, r("c2").left, r("c3").right].join(","));
+  check("row-gap in a column", () => (r("d2").top - r("d1").top === 28 && r("f4").height === 48) || r("d2").top - r("d1").top);
+  check("gap with row-reverse", () => (r("e1").left === 250 && r("e2").left === 190) || r("e1").left + "," + r("e2").left);
+  check("inline-flex shrink-to-fit includes gaps", () => r("f6").width - r("f6b").width === 15 || r("f6").width + " " + r("f6b").width);
+  check("percentage gap", () => r("h2").left === 80 || r("h2").left);
+  check("computed row-gap", () => getComputedStyle(document.getElementById("f2")).rowGap === "5px" || getComputedStyle(document.getElementById("f2")).rowGap);
+  console.log("DONE");
+}, 200));
+</script></body></html>

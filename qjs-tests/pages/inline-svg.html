@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><title>inline svg</title><style>
+body { margin: 0; color: #c00 }
+.icon { width: 24px; height: 24px }
+.gone { display: none }
+</style></head><body>
+<p id="line">a<svg id="sized" width="40" height="20"><rect width="40" height="20" fill="blue"/></svg>b</p>
+<div><svg id="css" class="icon" viewBox="0 0 512 512"><path d="M10 10 L500 500" stroke="currentColor" stroke-width="32"/></svg></div>
+<svg id="hidden" class="gone" width="10" height="10"><text>hidden text</text></svg>
+<div id="holder"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const size = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.width + "x" + r.height; };
+window.addEventListener("load", () => {
+  const sized = document.getElementById("sized");
+  check("size from attributes", () => eq(size("sized"), "40x20"));
+  check("size from css", () => eq(size("css"), "24x24"));
+  check("inline in its line", () => sized.getBoundingClientRect().left > 0 || sized.getBoundingClientRect().left);
+  check("display none", () => eq(size("hidden"), "0x0"));
+  check("namespace", () => eq(sized.namespaceURI, "http://www.w3.org/2000/svg"));
+  document.getElementById("holder").innerHTML = '<svg id="added" width="30" height="12"><circle cx="6" cy="6" r="6"/></svg>';
+  setTimeout(() => {
+    check("added by script", () => eq(size("added"), "30x12"));
+    console.log("DONE");
+  }, 300);
+});
+</script>
+</body></html>

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>iframe rebuild</title><style>body{font-size:22px} iframe{border:3px solid blue}</style></head><body>
+<p id="top">top paragraph</p>
+<iframe id="fr" src="frames/inner.html" width="400" height="80"></iframe>
+<p>after the iframe</p>
+<script>
+setTimeout(() => {
+  const p = document.createElement("p"); p.textContent = "INSERTED above the iframe by a timer";
+  document.getElementById("top").after(p);
+}, 800);
+setTimeout(() => { document.getElementById("fr").remove(); }, 2500);
+</script></body></html>

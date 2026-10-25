@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><title>flex order and stretched columns</title>
+<style>
+body { margin: 0; }
+.row { display: flex; width: 300px; }
+.row > div { width: 100px; height: 20px; }
+#o2 { order: 2; }
+#o-1 { order: -1; }
+.col { display: flex; flex-direction: column; width: 400px; }
+.ratio { padding-bottom: 50%; background: #ccc; }
+#c2 { order: 2; }
+.colwrap { display: flex; flex-direction: column; align-items: flex-start; width: 400px; }
+.fcol { display: flex; flex-direction: column; }
+.fcol > div { flex: 1; }
+</style></head><body>
+<div class="row"><div id="o2"></div><div id="o0"></div><div id="o-1"></div></div>
+<div class="col" id="col"><div id="c2">text</div><div id="c1"><div class="ratio"></div></div></div>
+<div class="colwrap"><div id="w1">short</div></div>
+<div class="fcol" id="fcol"><div><div style="height: 100px"></div></div></div><div id="after">after</div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => setTimeout(() => {
+  check("order places items", () => (r("o-1").left === 0 && r("o0").left === 100 && r("o2").left === 200) || [r("o-1").left, r("o0").left, r("o2").left].join(","));
+  check("order in a column", () => (r("c1").top < r("c2").top) || r("c1").top + "," + r("c2").top);
+  check("stretched column item has its height at its width", () => r("c1").height === 200 || r("c1").height);
+  check("column fits the stretched item", () => r("col").height === r("c1").height + r("c2").height || r("col").height);
+  check("unstretched column item shrinks", () => r("w1").width < 400 || r("w1").width);
+  check("flex: 1 in a column of auto height keeps its content", () => (r("fcol").height === 100 && r("after").top === r("fcol").top + 100) || r("fcol").height);
+  console.log("DONE");
+}, 200));
+</script></body></html>

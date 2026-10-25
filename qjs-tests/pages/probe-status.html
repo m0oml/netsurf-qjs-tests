@@ -1,0 +1,8 @@
+<html><body><script>
+(async () => {
+  for (const code of [404, 401, 500, 204, 418]) {
+    try { const r = await fetch("/api/status/" + code); console.log(code + " -> " + r.status + " " + JSON.stringify(await r.text())); }
+    catch (e) { console.log(code + " error " + e); }
+  }
+})();
+</script></body></html>

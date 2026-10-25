@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><title>lifecycle</title>
+<script>
+var log = [];
+log.push("head:" + document.readyState);
+document.addEventListener("DOMContentLoaded", function (e) { log.push("doc-DCL:" + document.readyState + ":" + e.type); });
+window.addEventListener("DOMContentLoaded", function () { log.push("win-DCL"); });
+window.addEventListener("load", function (e) { log.push("win-load:" + e.type); });
+window.onload = function () { log.push("onload"); };
+</script>
+</head><body>
+<script>log.push("body:" + document.readyState);</script>
+<script>
+setTimeout(function () {
+  var s = log.join(" ");
+  console.log("log " + s);
+  function has(x) { return log.indexOf(x) >= 0; }
+  console.log((has("head:loading") ? "PASS" : "FAIL") + " readyState loading during parse");
+  console.log((has("doc-DCL:interactive:DOMContentLoaded") ? "PASS" : "FAIL") + " DOMContentLoaded at document, interactive");
+  console.log((has("win-DCL") ? "PASS" : "FAIL") + " DOMContentLoaded bubbles to window");
+  console.log((log.indexOf("doc-DCL:interactive:DOMContentLoaded") < log.indexOf("win-DCL") ? "PASS" : "FAIL") + " document before window");
+  console.log((has("win-load:load") ? "PASS" : "FAIL") + " window load listener");
+  console.log((has("onload") ? "PASS" : "FAIL") + " window.onload");
+  console.log((log.indexOf("win-DCL") < log.indexOf("onload") ? "PASS" : "FAIL") + " DOMContentLoaded before load");
+  console.log((document.readyState === "complete" ? "PASS" : "FAIL") + " readyState complete later (" + document.readyState + ")");
+  console.log("DONE");
+}, 300);
+</script>
+</body></html>

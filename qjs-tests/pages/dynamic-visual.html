@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><title>dynamic</title><style>body{font-size:28px} .box{padding:10px;border:3px solid #444;margin:10px}</style></head><body>
+<div class="box" id="a">A: parse-time text</div>
+<div class="box" id="b">B: parse-time text</div>
+<script>
+document.getElementById("a").textContent = "A: changed by script during parse (should show)";
+document.addEventListener("DOMContentLoaded", () => {
+  const p = document.createElement("div"); p.className = "box"; p.textContent = "C: added on DOMContentLoaded";
+  document.body.append(p);
+});
+setTimeout(() => {
+  document.getElementById("b").textContent = "B: changed by timer after load";
+  const p = document.createElement("div"); p.className = "box"; p.textContent = "D: added by timer after load";
+  document.body.append(p);
+}, 1500);
+</script>
+</body></html>

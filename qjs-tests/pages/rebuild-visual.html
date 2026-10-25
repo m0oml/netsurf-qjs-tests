@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><title>rebuild visual</title><style>
+body { font-size: 24px }
+.menu { display: none; background: #cfc; padding: 6px }
+.open .menu { display: block }
+.warn .msg { color: red; font-weight: bold }
+</style></head><body>
+<div id="nav">Nav <div class="menu">MENU visible via .open ancestor (should show)</div></div>
+<div id="box"><span class="msg">this text should turn red and bold</span></div>
+<p><img src="red.png" width="60" height="30"> red image kept</p>
+<form><input id="in" value="initial" size="30"> <select id="s"><option>first</option><option>second</option></select></form>
+<script>
+setTimeout(() => {
+  document.getElementById("nav").classList.add("open");
+  document.getElementById("box").className = "warn";
+  document.getElementById("in").value = "set by timer";
+  document.getElementById("s").options = undefined;
+  document.querySelectorAll("#s option")[1].setAttribute("selected", "");
+}, 1000);
+</script></body></html>

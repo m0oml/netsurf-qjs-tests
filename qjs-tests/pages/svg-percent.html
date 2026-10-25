@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><title>inline svg with percentage size</title><style>
+body { margin: 0 } .w { width: 300px } svg { display: block }
+</style></head><body>
+<div class="w"><svg id="a" width="100%" height="13" viewBox="0 0 1300 13" preserveAspectRatio="none"><line x1="0" x2="1300" y1="0.5" y2="0.5" stroke="black"/></svg></div>
+<div class="w"><svg id="b" width="50%" viewBox="0 0 100 50"><rect width="100" height="50" fill="red"/></svg></div>
+<div class="w"><svg id="c" width="40" height="20" viewBox="0 0 100 50"><rect width="100" height="50" fill="blue"/></svg></div>
+<div class="w"><svg id="d" viewBox="0 0 120 60"><rect width="120" height="60" fill="green"/></svg></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const R = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => {
+  check("100% width fills the container", () => eq(R("a").width, 300));
+  check("height attribute kept", () => eq(R("a").height, 13));
+  check("50% width", () => eq(R("b").width, 150));
+  check("fixed size", () => eq(R("c").width + "x" + R("c").height, "40x20"));
+  check("view box size when none", () => eq(R("d").width + "x" + R("d").height, "120x60"));
+  console.log("DONE");
+});
+</script></body></html>

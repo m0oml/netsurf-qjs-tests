@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><title>flex reverse directions</title><style>
+body { margin: 0 }
+.c { display: flex; width: 100px; margin-top: 10px }
+.c div { width: 20px; height: 30px }
+#r { flex-direction: row-reverse }
+#rp { flex-direction: row-reverse; padding-left: 10px }
+#fp { padding-left: 10px }
+#cr { flex-direction: column-reverse }
+#crh { flex-direction: column-reverse; height: 200px }
+#cr div:nth-child(2), #crh div:nth-child(2) { height: 40px }
+</style></head><body>
+<div id="r" class="c"><div id="ra"></div><div id="rb"></div></div>
+<div id="rp" class="c"><div id="rpa"></div><div id="rpb"></div></div>
+<div id="fp" class="c"><div id="fpa"></div></div>
+<div id="cr" class="c"><div id="cra"></div><div id="crb"></div></div>
+<div id="after"></div>
+<div id="crh" class="c"><div id="crha"></div><div id="crhb"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const R = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => {
+  check("row-reverse first item at the right", () => eq(R("ra").right, R("r").right));
+  check("row-reverse second item left of first", () => eq(R("rb").right, R("ra").left));
+  check("row with padding", () => eq(R("fpa").left, R("fp").left + 10));
+  check("row-reverse with padding", () => eq(R("rpa").right, R("rp").left + 110));
+  check("column-reverse auto height", () => eq(R("cr").height, 70));
+  check("column-reverse first item at the bottom", () => eq(R("cra").bottom, R("cr").bottom));
+  check("column-reverse second item above", () => eq(R("crb").bottom, R("cra").top));
+  check("content after is placed", () => eq(R("after").top, R("cr").bottom));
+  check("column-reverse fixed height", () => eq(R("crha").bottom, R("crh").bottom));
+  console.log("DONE");
+});
+</script></body></html>

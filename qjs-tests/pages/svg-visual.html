@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><title>inline svg visual</title><style>
+body { margin: 8px; color: #c00; font: 16px sans-serif }
+.icon { width: 24px; height: 24px; vertical-align: middle }
+button { color: #3050ff }
+</style></head><body>
+<p>Attributes: <svg width="40" height="20"><rect width="40" height="20" fill="blue"/></svg></p>
+<p>Red currentColor stroke, viewBox, CSS 24px: <svg class="icon" viewBox="0 0 512 512"><path d="M221.09 64a157.09 157.09 0 1 0 157.09 157.09A157.1 157.1 0 0 0 221.09 64Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32px"/><path d="M338.29 338.29 448 448" fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32px"/></svg></p>
+<p>In a blue button: <button><svg class="icon" viewBox="0 0 512 512"><path d="M368 368 144 144M368 144 144 368" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="32px"/></svg></button></p>
+<p>No size at all: <svg viewBox="0 0 100 50"><circle cx="25" cy="25" r="20" fill="green"/><circle cx="75" cy="25" r="20" fill="orange"/></svg></p>
+<p>Gradient: <svg width="80" height="20"><defs><linearGradient id="g"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/></linearGradient></defs><rect width="80" height="20" fill="url(#g)"/></svg></p>
+</body></html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><title>dom basic</title></head>
+<body>
+<div id="a" class="x y">hello <b>world</b></div>
+<ul id="list"><li>one</li><li>two</li><li>three</li></ul>
+<script>
+function check(name, fn) {
+  try { console.log((fn() ? "PASS " : "FAIL ") + name); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("document exists", function() { return typeof document === "object"; });
+check("window is global", function() { return window === this && typeof window.document === "object"; });
+check("getElementById", function() { return document.getElementById("a").id === "a"; });
+check("tagName", function() { return document.getElementById("a").tagName === "DIV"; });
+check("instanceof", function() { var d = document.getElementById("a"); return d instanceof HTMLDivElement && d instanceof HTMLElement && d instanceof Element && d instanceof Node && d instanceof EventTarget; });
+check("same wrapper", function() { return document.getElementById("a") === document.getElementById("a"); });
+check("textContent", function() { return document.getElementById("a").textContent === "hello world"; });
+check("childNodes length", function() { return document.getElementById("list").childNodes.length === 3; });
+check("getElementsByTagName", function() { return document.getElementsByTagName("li").length === 3; });
+check("createElement+append", function() { var p = document.createElement("p"); p.textContent = "made"; document.body.appendChild(p); return document.body.lastChild === p && p.parentNode === document.body; });
+check("classList", function() { return document.getElementById("a").classList.contains("y"); });
+check("setAttribute", function() { var d = document.getElementById("a"); d.setAttribute("data-k", "v"); return d.getAttribute("data-k") === "v"; });
+check("Node constants", function() { return Node.ELEMENT_NODE === 1 && document.body.ELEMENT_NODE === 1; });
+check("nodeType", function() { return document.body.nodeType === Node.ELEMENT_NODE; });
+check("toStringTag", function() { return Object.prototype.toString.call(document.body) === "[object HTMLBodyElement]"; });
+check("illegal constructor", function() { try { new Node(); return false; } catch (e) { return e instanceof TypeError; } });
+check("location", function() { return typeof location.href === "string" && location.href.indexOf("dom-basic") > 0; });
+check("navigator", function() { return typeof navigator.userAgent === "string"; });
+check("arrow+template", function() { const f = (x) => `v${x}`; return f(1) === "v1"; });
+check("class syntax", function() { class A { get v() { return 2; } } return new A().v === 2; });
+check("addEventListener+dispatch", function() {
+  var hit = 0; var d = document.getElementById("a");
+  d.addEventListener("ping", function (ev) { hit++; }, false);
+  var ev = document.createEvent("Event"); ev.initEvent("ping", true, true);
+  d.dispatchEvent(ev); return hit === 1;
+});
+var later = Promise.resolve().then(() => console.log("PASS promise microtask"));
+setTimeout(function() { console.log("PASS setTimeout"); console.log("DONE"); }, 10);
+</script>
+</body></html>

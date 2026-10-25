@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><title>transform translations</title>
+<style>
+body { margin: 0; }
+.b { width: 100px; height: 50px; background: #ccc; }
+#t1 { transform: translate(10px, 20px); }
+#t2 { transform: translateX(-110%); }
+#t3 { position: absolute; left: 50%; top: 200px; transform: translate(-50%, -50%); }
+#t4 { transform: rotate(10deg) translateY(5px); }
+#t5 { position: relative; left: 5px; transform: translateX(5px); }
+#t6 { transform: matrix(1, 0, 0, 1, 7, 8); }
+#outer { transform: translateY(30px); }
+#menu { position: fixed; top: 0; left: 0; width: 300px; height: 100%; transform: translateX(-110%); }
+</style></head><body>
+<div class="b" id="t1"></div>
+<div class="b" id="t2"></div>
+<div class="b" id="t3"></div>
+<div class="b" id="t4"></div>
+<div class="b" id="t5"></div>
+<div class="b" id="t6"></div>
+<div id="outer"><div class="b" id="inner"></div></div>
+<div id="menu">menu</div>
+<span id="inl" style="transform: translateX(50px)">inline</span>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+window.addEventListener("load", () => setTimeout(() => {
+  check("translate moves the box", () => (r("t1").left === 10 && r("t1").top === 20) || r("t1").left + "," + r("t1").top);
+  check("percentage of its own width", () => r("t2").left === -110 || r("t2").left);
+  check("centring an absolute box", () => (r("t3").left === document.documentElement.offsetWidth / 2 - 50 && r("t3").top === 175) || r("t3").left + "," + r("t3").top);
+  check("other functions are ignored", () => r("t4").top === 100 + 5 || r("t4").top);
+  check("adds to relative positioning", () => r("t5").left === 10 || r("t5").left);
+  check("matrix translation", () => r("t6").left === 7 || r("t6").left);
+  check("children move with their parent", () => r("inner").top - r("t6").top === 50 + 30 - 8 || (r("inner").top - r("t6").top));
+  check("off-canvas menu is off screen", () => r("menu").right <= 0 || r("menu").right);
+  check("computed transform", () => getComputedStyle(document.getElementById("t1")).transform === "matrix(1, 0, 0, 1, 10, 20)" || getComputedStyle(document.getElementById("t1")).transform);
+  check("computed none", () => getComputedStyle(document.getElementById("outer").firstElementChild).transform === "none" || getComputedStyle(document.getElementById("inner")).transform);
+  check("script sets a transform", () => { document.getElementById("t1").style.transform = "translateX(3px)"; return document.getElementById("t1").style.transform === "translateX(3px)"; });
+  console.log("DONE");
+}, 200));
+</script></body></html>

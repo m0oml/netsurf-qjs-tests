@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head><title>border-radius</title><style>
+body { margin: 12px; font: 13px sans-serif; background: #fff }
+.b { display: inline-block; width: 110px; height: 70px; margin: 10px; vertical-align: top; text-align: center; line-height: 70px }
+.bg { background: #4a7bd0; color: #fff; border-radius: 20px }
+.bd { border: 3px solid #c33; border-radius: 20px }
+.bdbg { background: #fe9; border: 3px solid #393; border-radius: 20px }
+.circle { width: 70px; height: 70px; background: #a4c; border-radius: 50%; color: #fff }
+.pill { background: #f80; border-radius: 999px; color: #fff }
+.ell { background: #3ab; border-radius: 55px / 35px; color: #fff }
+.corners { background: #888; border-radius: 30px 0 30px 0; color: #fff }
+.shadow { background: #fff; border: 1px solid #bbb; border-radius: 14px; box-shadow: 0 4px 12px #0006 }
+.inset { background: #fff; border: 1px solid #888; border-radius: 14px; box-shadow: inset 0 0 12px #000a }
+.mixed { background: #ddd; border-width: 3px; border-style: solid; border-color: red blue; border-radius: 16px }
+.big { width: 40px; height: 40px; background: #333; border-radius: 40px }
+.search { width: 300px; height: 40px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #22262e40; margin: 10px; border: 1px solid #ccc }
+</style></head><body>
+<div class="b bg">background</div><div class="b bd">border</div><div class="b bdbg">both</div><div class="b circle">circle</div><div class="b pill">pill</div><div class="b ell">ellipse</div><br>
+<div class="b corners">two corners</div><div class="b shadow">shadow</div><div class="b inset">inset</div><div class="b mixed">two colours</div><div class="b big"></div><br>
+<div class="search"></div>
+</body></html>

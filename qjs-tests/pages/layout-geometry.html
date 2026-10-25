@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head><title>geometry</title><style>
+body { margin: 0; font-size: 16px }
+#box { margin: 10px; padding: 5px; border: 2px solid black; width: 100px; height: 40px }
+#rel { position: relative; margin-left: 30px; border-top: 3px solid red; padding-top: 7px }
+#child { height: 20px }
+.big { height: 120px !important }
+.hidden { display: none }
+</style></head><body>
+<div id="box">box</div>
+<div id="rel"><div id="child">child</div></div>
+<span id="inl">inline text</span>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const box = document.getElementById("box");
+// inline style
+check("style set/get", () => { box.style.color = "red"; return eq(box.style.color, "red"); });
+check("style attribute written", () => eq(box.getAttribute("style"), "color: red;"));
+check("dashed and camel", () => { box.style.setProperty("background-color", "blue"); return eq(box.style.backgroundColor + "|" + box.style["background-color"], "blue|blue"); });
+check("cssText", () => eq(box.style.cssText, "color: red; background-color: blue;"));
+check("remove", () => { box.style.removeProperty("color"); return eq(box.style.cssText, "background-color: blue;"); });
+check("priority", () => { box.style.setProperty("width", "100px", "important"); return eq(box.style.getPropertyPriority("width"), "important"); });
+check("empty string removes", () => { box.style.width = ""; box.style.backgroundColor = ""; return eq(box.hasAttribute("style"), false); });
+check("feature detect supported", () => ("display" in box.style) && ("flexDirection" in box.style) && ("cssFloat" in box.style));
+check("feature detect unsupported", () => !("backdropFilter" in box.style) && ("transform" in box.style) && ("gridTemplateColumns" in box.style));
+check("same object", () => box.style === box.style);
+check("cssText set", () => { box.style.cssText = "color: green; margin-top: 4px"; return eq(box.style.length + ":" + box.style.item(1), "2:margin-top"); });
+box.removeAttribute("style");
+check("style = string", () => { box.style = "color: navy"; return eq(box.style.color, "navy"); });
+box.removeAttribute("style");
+
+document.addEventListener("DOMContentLoaded", () => setTimeout(run, 50));
+function run() {
+  check("innerWidth real", () => innerWidth > 100 || innerWidth);
+  check("offsetWidth", () => eq(box.offsetWidth, 100 + 2 * 5 + 2 * 2));
+  check("offsetHeight", () => eq(box.offsetHeight, 40 + 2 * 5 + 2 * 2));
+  check("clientWidth", () => eq(box.clientWidth, 110));
+  check("clientTop", () => eq(box.clientTop, 2));
+  const r = box.getBoundingClientRect();
+  check("rect", () => eq([r.left, r.top, r.width, r.height].join(), "10,10,114,54"));
+  check("offsetTop/Left", () => eq(box.offsetLeft + "," + box.offsetTop, "10,10"));
+  const child = document.getElementById("child");
+  check("offsetParent positioned", () => child.offsetParent === document.getElementById("rel") || String(child.offsetParent && child.offsetParent.id));
+  check("offset in positioned parent", () => eq(child.offsetTop, 7));
+  check("body offsetParent", () => box.offsetParent === document.body || String(box.offsetParent));
+  check("computed display", () => eq(getComputedStyle(box).display, "block"));
+  check("computed inline", () => eq(getComputedStyle(document.getElementById("inl")).display, "inline"));
+  check("computed position", () => eq(getComputedStyle(document.getElementById("rel")).position, "relative"));
+  check("computed width", () => eq(getComputedStyle(box).width, "100px"));
+  check("computed padding", () => eq(getComputedStyle(box).paddingTop + getComputedStyle(box).getPropertyValue("padding-left"), "5px5px"));
+  check("computed border", () => eq(getComputedStyle(box).borderTopWidth, "2px"));
+  check("computed font-size", () => eq(getComputedStyle(box).fontSize, "16px"));
+  check("computed read only", () => { try { getComputedStyle(box).color = "red"; getComputedStyle(box).setProperty("color", "red"); return "no throw"; } catch (e) { return e.name === "NoModificationAllowedError"; } });
+  // forced layout after a change
+  box.classList.add("big");
+  check("forced rebuild height", () => eq(box.offsetHeight, 120 + 14));
+  box.classList.add("hidden");
+  check("hidden no box", () => eq(box.offsetHeight + "," + box.getClientRects().length + "," + getComputedStyle(box).display, "0,0,none"));
+  box.classList.remove("hidden");
+  box.style.width = "200px";
+  check("inline style changes layout", () => eq(box.offsetWidth, 214));
+  check("inline span rect", () => { const s = document.getElementById("inl").getBoundingClientRect(); return s.width > 20 && s.height > 10 || JSON.stringify(s); });
+  check("scroll API callable", () => { scrollTo(0, 0); window.scrollBy(0, 0); box.scrollIntoView(); return scrollY >= 0; });
+  console.log("DONE");
+}
+</script></body></html>

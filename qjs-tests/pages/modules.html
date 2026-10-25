@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head><title>modules</title>
+<script>
+window.__log = [];
+document.addEventListener("DOMContentLoaded", () => {
+  __log.push("DCL");
+});
+</script>
+<script defer src="data:text/javascript,__log.push(%22classic-defer%22)"></script>
+<script type="module">
+import { a, count } from "./modules/a.js";
+import { where } from "./modules/sub/c.js";
+__log.push("inline:" + a);
+window.__inlineCount = count;
+window.__where = where;
+window.__sawLater = !!document.getElementById("later");
+var notGlobal = 1;
+window.__strict = (function () { return this === undefined; })();
+</script>
+<script type="module" src="modules/main.js"></script>
+<script type="module" src="modules/uses-broken.js"></script>
+<script type="module">
+import { tla } from "./modules/tla.js";
+window.__tla = tla;
+</script>
+<script type="module">import _ from "lodash"; __log.push("bare ran");</script>
+<script nomodule>__log.push("nomodule ran");</script>
+</head><body>
+<p id="later">later</p>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+check("not run during parse", () => eq(__log.length, 0));
+var dyn = {};
+import("./modules/dyn.js").then(ns => { dyn.def = ns.default(); dyn.value = ns.value; }, e => { dyn.err = String(e); });
+import("./modules/missing.js").then(() => { dyn.missing = "resolved"; }, e => { dyn.missing = e.name; });
+import("./modules/sub/c.js").then(ns => { dyn.cached = ns.c; });
+window.addEventListener("load", () => {
+  const s = document.createElement("script");
+  s.type = "module";
+  s.src = "modules/inserted.js";
+  document.head.appendChild(s);
+  setTimeout(report, 400);
+});
+function report() {
+  check("inline module", () => __log.includes("inline:abc") || __log.join());
+  check("src module", () => __log.includes("main:abc") || __log.join());
+  check("deferred order", () => eq(__log.slice(0, 3).join(), "classic-defer,inline:abc,main:abc"));
+  check("before DOMContentLoaded", () => __log.indexOf("DCL") > __log.indexOf("main:abc") || __log.join());
+  check("module evaluated once", () => eq(__evals, 1));
+  check("count from import", () => eq(__inlineCount, 1));
+  check("import.meta.url", () => /\/modules\/sub\/c\.js$/.test(__where) || __where);
+  check("parsed document", () => eq(__sawLater, true));
+  check("module scope", () => eq(typeof notGlobal, "undefined"));
+  check("strict mode", () => eq(__strict, true));
+  check("module this", () => eq(__mainThis, true));
+  check("syntax error in import", () => !__log.includes("uses-broken ran"));
+  check("top-level await", () => eq(__tla, 42));
+  check("bare specifier fails", () => !__log.includes("bare ran"));
+  check("nomodule skipped", () => !__log.includes("nomodule ran"));
+  check("dynamic import", () => eq(dyn.def + dyn.value, "dyn42") || dyn.err);
+  check("dynamic import missing", () => eq(dyn.missing, "TypeError"));
+  check("dynamic import cached", () => eq(dyn.cached, "c"));
+  check("inserted module", () => eq(window.__inserted, "insertedc"));
+  console.log("DONE");
+}
+</script>
+</body></html>

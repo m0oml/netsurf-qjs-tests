@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><title>overflow-wrap and word-break</title>
+<style>
+body { margin: 0; font: 16px sans-serif; }
+.box { width: 120px; border: 1px solid; margin: 4px 0; }
+#bw { overflow-wrap: break-word; }
+#ww { word-wrap: break-word; }
+#any { overflow-wrap: anywhere; }
+#ba { word-break: break-all; }
+#wbw { word-break: break-word; }
+#normal { }
+#short { overflow-wrap: break-word; }
+#nowrap { overflow-wrap: break-word; white-space: nowrap; }
+table { border-collapse: collapse; }
+td { padding: 0; }
+#cellany { overflow-wrap: anywhere; }
+#cellbw { overflow-wrap: break-word; }
+.flex { display: flex; width: 120px; }
+.flex > div { min-width: auto; }
+#flexany { overflow-wrap: anywhere; }
+#inherit { overflow-wrap: break-word; }
+</style></head><body>
+<div class="box" id="bw">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="ww">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="any">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="ba">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="wbw">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="normal">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="short">short words only here</div>
+<div class="box" id="nowrap">https://example.org/a/very/long/path/without/any/spaces/at/all</div>
+<div class="box" id="inherit"><p style="margin:0"><span>mixed text then https://example.org/a/very/long/path/without/any/spaces/at/all and more</span></p></div>
+<div class="box" id="span"><span>several short words inside a span which must wrap</span></div>
+<table style="width: 1px"><tr><td id="cellany">https://example.org/a/very/long/path</td></tr></table>
+<table style="width: 1px"><tr><td id="cellbw">https://example.org/a/very/long/path</td></tr></table>
+<div class="flex"><div id="flexany">https://example.org/a/very/long/path/without/any/spaces/at/all</div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const lineHeight = document.getElementById("short").offsetHeight;
+const h = (id) => document.getElementById(id).offsetHeight;
+const sw = (id) => document.getElementById(id).scrollWidth;
+const w = (id) => document.getElementById(id).offsetWidth;
+function run() {
+  check("computed overflow-wrap", () => getComputedStyle(document.getElementById("bw")).overflowWrap === "break-word" || "got " + getComputedStyle(document.getElementById("bw")).overflowWrap);
+  check("break-word wraps", () => h("bw") > 3 * h("normal") || h("bw") + " vs " + h("normal"));
+  check("break-word keeps within the box", () => sw("bw") <= 122 || sw("bw"));
+  check("word-wrap is an alias", () => h("ww") === h("bw") || h("ww") + " vs " + h("bw"));
+  check("anywhere wraps", () => h("any") === h("bw") || h("any") + " vs " + h("bw"));
+  check("break-all wraps", () => h("ba") === h("bw") || h("ba") + " vs " + h("bw"));
+  check("word-break: break-word wraps", () => h("wbw") === h("bw") || h("wbw") + " vs " + h("bw"));
+  check("normal overflows on one line", () => sw("normal") > 300 || sw("normal"));
+  check("short words unaffected", () => h("short") <= 3 * 20 || h("short"));
+  check("nowrap is not broken", () => h("nowrap") === h("normal") || h("nowrap") + " vs " + h("normal"));
+  check("inherited through inline", () => h("inherit") > h("short") || h("inherit"));
+  check("anywhere shrinks a table cell", () => w("cellany") < 40 || w("cellany"));
+  check("break-word does not shrink a table cell", () => w("cellbw") > 200 || w("cellbw"));
+  check("anywhere lets a flex item shrink", () => w("flexany") <= 120 || w("flexany"));
+  check("text in a span wraps", () => h("span") > 40 || h("span"));
+  check("computed word-break", () => getComputedStyle(document.getElementById("ba")).wordBreak === "break-all" || getComputedStyle(document.getElementById("ba")).wordBreak);
+  check("computed word-wrap", () => getComputedStyle(document.getElementById("ww")).wordWrap === "break-word" || getComputedStyle(document.getElementById("ww")).wordWrap);
+  check("set from script", () => { const e = document.getElementById("normal"); e.style.overflowWrap = "anywhere"; return e.style.overflowWrap === "anywhere" || e.style.overflowWrap; });
+  console.log("DONE");
+}
+window.addEventListener("load", () => setTimeout(run, 200));
+</script></body></html>

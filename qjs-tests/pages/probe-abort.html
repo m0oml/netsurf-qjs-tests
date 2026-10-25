@@ -1,0 +1,20 @@
+<html><body><script>
+const timed = async (name, url) => {
+  const t0 = Date.now();
+  const c = new AbortController();
+  const timer = setTimeout(() => c.abort(), 2500);
+  try { const r = await fetch(url, { signal: c.signal }); console.log(name + " " + r.status + " after " + (Date.now() - t0) + "ms"); }
+  catch (e) { console.log(name + " " + e.name + " after " + (Date.now() - t0) + "ms"); }
+  clearTimeout(timer);
+};
+(async () => {
+  const c = new AbortController();
+  const p = fetch("/api/slow?ms=1000", { signal: c.signal });
+  setTimeout(() => c.abort(), 50);
+  try { await p; } catch (e) { console.log("aborted " + e.name); }
+  await timed("other host", "http://127.0.0.1:8702/api/cors?acao=*");
+  await timed("same host 1", "/api/latin1");
+  await timed("same host 2", "/api/latin1");
+  await timed("same host 3", "/api/latin1");
+})();
+</script></body></html>

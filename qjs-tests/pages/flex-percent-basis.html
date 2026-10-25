@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><title>flex sizes in columns</title>
+<style>
+body { margin: 0; font: 16px sans-serif; }
+ul { margin: 0; padding: 0; list-style: none; }
+li { display: flex; position: relative; }
+.card { display: flex; flex-direction: column; justify-content: space-between; width: 100%; position: relative; }
+.link { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+.inner { display: flex; flex-direction: column-reverse; flex-basis: 100%; width: 100%; }
+.body { height: 100px; background: #ccc; }
+.fixed { height: 300px; }
+.col300 { display: flex; flex-direction: column; height: 300px; }
+.row { display: flex; width: 400px; }
+.row > div { flex-basis: 25%; flex-shrink: 0; height: 10px; }
+</style></head><body>
+<div class="card" id="c1"><div class="inner" id="i1"><div class="body">a</div></div></div>
+<ul><li id="l2"><div class="card" id="c2"><a class="link" href="#"></a><div class="inner" id="i2"><div class="body">b</div></div></div></li></ul>
+<div class="card fixed" id="c3"><div class="inner" id="i3" style="flex-basis: 50%"><div class="body">c</div></div></div>
+<div class="col300"><div id="g1" style="flex-grow: 1"><div class="body"></div></div><div id="g2" style="height: 50px"></div></div>
+<div class="col300" style="height: 100px"><div id="s1" style="height: 300px"></div></div>
+<div class="col300" style="height: 100px"><div id="s2"><div class="body" style="height: 200px"></div></div></div>
+<div class="col300" style="height: 100px"><div id="s3" style="overflow: hidden"><div class="body" style="height: 200px"></div></div></div>
+<div class="row" id="r"><div id="r1"></div><div id="r2"></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const h = (id) => document.getElementById(id).offsetHeight;
+const w = (id) => document.getElementById(id).offsetWidth;
+window.addEventListener("load", () => setTimeout(() => {
+  check("column with auto height uses content", () => h("c1") === 100 || h("c1"));
+  check("item with percentage basis is its content", () => h("i1") === 100 || h("i1"));
+  check("absolute child does not size the card", () => h("c2") === 100 || h("c2"));
+  check("flex row item stretches to the card", () => h("l2") === 100 || h("l2"));
+  check("percentage of a definite height", () => h("i3") === 150 || h("i3") + " in " + h("c3"));
+  check("row percentage of the width", () => w("r1") === 100 || w("r1"));
+  check("column item grows", () => h("g1") === 250 || h("g1"));
+  check("other column item keeps its height", () => h("g2") === 50 || h("g2"));
+  check("empty column item shrinks", () => h("s1") === 100 || h("s1"));
+  check("column item does not shrink below its content", () => h("s2") === 200 || h("s2"));
+  check("scrolling column item shrinks", () => h("s3") === 100 || h("s3"));
+  console.log("DONE");
+}, 200));
+</script></body></html>
