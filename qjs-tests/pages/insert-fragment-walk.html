@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><title>tree walks while a fragment is inserted</title></head><body>
+<div id="host"></div>
+<form id="f"></form>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const seen = [];
+document.addEventListener("DOMNodeInserted", (e) => {
+  if (e.target.nodeType !== 1 || !e.target.classList.contains("piece")) return;
+  /* walk the whole tree while the fragment's children are being inserted */
+  seen.push([document.getElementsByTagName("*").length, document.forms.length,
+             document.querySelectorAll(".piece").length,
+             getComputedStyle(e.target).fontSize !== undefined]);
+}, true);
+const frag = document.createDocumentFragment();
+for (let i = 0; i < 4; i++) {
+  const d = document.createElement("div");
+  d.className = "piece";
+  d.innerHTML = "<b>x</b>";
+  frag.appendChild(d);
+}
+document.getElementById("host").appendChild(frag);
+check("a listener ran for every inserted node", () => seen.length === 4 || seen.length);
+check("walks saw the whole tree", () => seen.every((s) => s[0] === document.getElementsByTagName("*").length && s[1] === 1 && s[2] === 4) || JSON.stringify(seen));
+check("the fragment is empty afterwards", () => frag.childNodes.length === 0);
+check("children are in the host", () => document.getElementById("host").children.length === 4);
+check("each child's parent is the host", () => Array.from(document.getElementById("host").children).every((c) => c.parentNode === document.getElementById("host")));
+console.log("DONE");
+</script></body></html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>window.name</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("an unnamed window has an empty string", () => window.name === "" || JSON.stringify(window.name));
+check("string methods work on it", () => window.name.match(/x/) === null);
+window.name = "abc";
+check("name can be set", () => window.name === "abc" && self.name === "abc");
+window.name = 5;
+check("set value is a string", () => window.name === "5" || typeof window.name);
+console.log("DONE");
+</script></body></html>

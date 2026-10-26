@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html><head><title>collection out of range index</title></head><body>
+<div id="d"><p>a</p><p>b</p></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const d = document.getElementById("d");
+const u = (v) => v === undefined || String(v);
+check("getElementsByTagName", () => u(d.getElementsByTagName("*")[99]));
+check("getElementsByTagName in range", () => d.getElementsByTagName("p")[1].textContent === "b");
+check("getElementsByClassName", () => u(d.getElementsByClassName("x")[0]));
+check("querySelectorAll", () => u(d.querySelectorAll("p")[2]));
+check("childNodes", () => u(d.childNodes[99]));
+check("children", () => u(d.children[2]));
+check("document.forms", () => u(document.forms[0]));
+check("document.images", () => u(document.images[0]));
+check("document.all style names", () => u(d.getElementsByTagName("p")["nope"]));
+check("negative index", () => u(d.children[-1]));
+check("item() still null", () => d.children.item(99) === null);
+check("in operator", () => !(99 in d.children) && (1 in d.children));
+check("jQuery style loop terminates", () => { const els = d.getElementsByTagName("*"); let i = 0, e; for (; (e = els[i]) !== undefined; i++) {} return i === 2 || i; });
+console.log("DONE");
+</script></body></html>

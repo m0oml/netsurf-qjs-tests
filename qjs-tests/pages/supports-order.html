@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><title>rule order around nested at-rules</title>
+<style>
+@supports (display: grid) {
+  #a { color: rgb(255, 0, 0); }
+  @media all { #a { color: rgb(0, 128, 0); } }
+  #a { color: rgb(0, 0, 255); }
+}
+@supports (display: grid) {
+  #b { color: rgb(255, 0, 0); }
+  @supports (display: flex) { #b { color: rgb(0, 128, 0); } }
+  #c { color: rgb(1, 2, 3); }
+}
+@media all {
+  #d { color: rgb(255, 0, 0); }
+  @media all { #d { color: rgb(0, 128, 0); } }
+}
+#d { color: rgb(0, 0, 255); }
+@media all {
+  #e { color: rgb(255, 0, 0); }
+}
+@supports (display: grid) {
+  @media all { #e { color: rgb(0, 128, 0); } }
+}
+#f { color: rgb(255, 0, 0); }
+@supports (display: grid) { #f { color: rgb(0, 128, 0); } }
+</style></head><body>
+<p id="a">a</p><p id="b">b</p><p id="c">c</p><p id="d">d</p><p id="e">e</p><p id="f">f</p>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const col = (id) => getComputedStyle(document.getElementById(id)).color;
+window.addEventListener("load", () => setTimeout(() => {
+  check("rule after a nested @media wins", () => col("a") === "rgb(0, 0, 255)" || col("a"));
+  check("nested @supports beats the rule before it", () => col("b") === "rgb(0, 128, 0)" || col("b"));
+  check("rule after a nested @supports applies", () => col("c") === "rgb(1, 2, 3)" || col("c"));
+  check("later top-level rule beats a nested @media", () => col("d") === "rgb(0, 0, 255)" || col("d"));
+  check("@supports after @media wins", () => col("e") === "rgb(0, 128, 0)" || col("e"));
+  check("@supports rule beats an earlier plain rule", () => col("f") === "rgb(0, 128, 0)" || col("f"));
+  console.log("DONE");
+}, 200));
+</script></body></html>

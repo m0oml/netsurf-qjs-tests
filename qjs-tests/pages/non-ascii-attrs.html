@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>non-ASCII text in attributes and content</title></head><body>
+<div id="a" data-v="x—y" title="é€𝄞" class="k—m">t—u é€𝄞</div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const a = document.getElementById("a");
+const show = (s) => JSON.stringify(s) + "/" + s.length;
+check("getAttribute em dash", () => a.getAttribute("data-v") === "x—y" || show(a.getAttribute("data-v")));
+check("getAttribute mixed widths", () => a.getAttribute("title") === "é€𝄞" || show(a.getAttribute("title")));
+check("attributes collection", () => a.attributes["title"].value === "é€𝄞" || show(a.attributes["title"].value));
+check("dataset", () => a.dataset.v === "x—y" || show(a.dataset.v));
+check("className", () => a.className === "k—m" || show(a.className));
+check("textContent", () => a.textContent === "t—u é€𝄞" || show(a.textContent));
+check("innerHTML", () => a.innerHTML === "t—u é€𝄞" || show(a.innerHTML));
+check("outerHTML", () => a.outerHTML.indexOf('data-v="x—y"') > 0 || a.outerHTML);
+check("title property", () => a.title === "é€𝄞" || show(a.title));
+check("setAttribute round trip", () => { a.setAttribute("data-w", "é—€𝄞"); return a.getAttribute("data-w") === "é—€𝄞" || show(a.getAttribute("data-w")); });
+check("firstChild.data", () => a.firstChild.data === "t—u é€𝄞" || show(a.firstChild.data));
+check("a long attribute with dashes", () => { const long = "—".repeat(2000) + "}}"; a.setAttribute("data-long", long); return a.getAttribute("data-long") === long || a.getAttribute("data-long").length; });
+console.log("DONE");
+</script></body></html>

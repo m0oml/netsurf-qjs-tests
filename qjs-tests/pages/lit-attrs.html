@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>lit-style attribute templates</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const t = document.createElement("template");
+t.innerHTML = '<div style$lit$="lit$123$" class$lit$="a lit$123$ b" id="x"><span>t</span></div>';
+const el = t.content.firstElementChild;
+check("getAttributeNames keeps $", () => el.getAttributeNames().join(",") === "style$lit$,class$lit$,id" || el.getAttributeNames().join(","));
+check("style$lit$ value", () => el.getAttribute("style$lit$") === "lit$123$" || el.getAttribute("style$lit$"));
+check("split on marker", () => el.getAttribute("class$lit$").split("lit$123$").length === 2);
+el.removeAttribute("style$lit$");
+check("removeAttribute dollar", () => el.getAttributeNames().join(",") === "class$lit$,id" || el.getAttributeNames().join(","));
+check("hasAttributes", () => el.hasAttributes());
+const walker = document.createTreeWalker(t.content, 129);
+let n = 0; while (walker.nextNode()) n++;
+check("tree walker elements and comments", () => n === 2 || n);
+check("parsed @ and : names", () => { const d = document.createElement("div"); d.innerHTML = '<p @click="go" :class="c" x-on:foo="1">'; const p = d.firstChild; return (p.getAttribute("@click") === "go" && p.getAttribute(":class") === "c" && p.getAttribute("x-on:foo") === "1") || p.getAttributeNames().join(","); });
+console.log("DONE");
+</script></body></html>

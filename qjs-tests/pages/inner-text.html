@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html><head><title>innerText</title><style>.h { display: none }</style></head><body>
+<div id="a">Hello <b>big</b>   world<script>1</script><span class="h">no</span></div>
+<div id="b"><p>One</p><p>Two<br>three</p></div>
+<ul id="c"><li>x</li><li>y</li></ul>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const el = (id) => document.getElementById(id);
+window.addEventListener("load", () => {
+check("inline text, spaces collapsed, hidden and script skipped", () => eq(el("a").innerText, "Hello big world"));
+check("blocks and br break lines", () => eq(el("b").innerText, "One\nTwo\nthree"));
+check("list items break lines", () => eq(el("c").innerText, "x\ny"));
+check("setter replaces the content", () => { el("a").innerText = "<i>t</i>"; return eq(el("a").textContent, "<i>t</i>") && el("a").children.length === 0; });
+check("a child element works", () => eq(el("b").children[0].innerText, "One"));
+console.log("DONE");
+});
+</script></body></html>

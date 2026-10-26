@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><title>DOMContentLoaded fires once</title></head><body>
+<div id="x">x</div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+let dcl = 0, loads = 0, ready = [], states = [document.readyState];
+const onReady = (fn) => { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); };
+let cbCount = 0;
+onReady(() => { cbCount++; });
+document.addEventListener("DOMContentLoaded", () => dcl++);
+window.addEventListener("load", () => loads++);
+document.addEventListener("readystatechange", () => states.push(document.readyState));
+window.addEventListener("load", () => {
+  /* a stylesheet which a script adds once the page has loaded */
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "data:text/css,%23x%7Bcolor%3Ared%7D";
+  document.head.appendChild(link);
+});
+window.addEventListener("load", () => setTimeout(() => {
+  check("DOMContentLoaded once on document", () => dcl === 1 || dcl);
+  check("load once", () => loads === 1 || loads);
+  check("ready callback once", () => cbCount === 1 || cbCount);
+  check("readyState sequence", () => states.join(",") === "loading,interactive,complete" || states.join(","));
+  console.log("DONE");
+}, 800));
+</script></body></html>

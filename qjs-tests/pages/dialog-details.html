@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><title>dialog and details</title></head><body>
+<dialog id="d"><p id="dp">hello</p></dialog>
+<dialog id="o" open><p>already</p></dialog>
+<details id="e"><summary id="s">sum</summary><div id="dc">content</div></details>
+<div id="plain"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const d = document.getElementById("d");
+const e = document.getElementById("e");
+const plain = document.getElementById("plain");
+check("dialog has the methods", () => typeof d.show === "function" && typeof d.showModal === "function" && typeof d.close === "function");
+check("other elements do not", () => plain.showModal === undefined && plain.close === undefined && plain.returnValue === undefined);
+check("closed by default", () => d.open === false);
+check("open attribute present reads true", () => document.getElementById("o").open === true);
+let closed = 0, returned = null;
+d.addEventListener("close", () => { closed++; returned = d.returnValue; });
+check("showModal opens", () => { d.showModal(); return d.open === true && d.hasAttribute("open"); });
+check("showModal twice throws", () => { try { d.showModal(); return "no throw"; } catch (err) { return err.name === "InvalidStateError" || err.name; } });
+check("close with a value", () => { d.close("done"); return d.open === false && d.returnValue === "done"; });
+check("show opens", () => { d.show(); return d.open === true; });
+check("open can be set", () => { d.open = false; return !d.hasAttribute("open"); });
+check("details starts closed", () => e.open === false);
+check("details opens by attribute", () => { e.open = true; return e.hasAttribute("open"); });
+check("an ordinary element keeps an open property", () => { plain.open = 5; return plain.open === 5; });
+document.getElementById("s").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+check("clicking the summary closes the details", () => e.open === false);
+document.getElementById("s").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+check("clicking again opens it", () => e.open === true);
+check("a prevented click does nothing", () => {
+  const s = document.getElementById("s");
+  s.addEventListener("click", (ev) => ev.preventDefault(), { once: true });
+  s.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  return e.open === true;
+});
+window.addEventListener("load", () => setTimeout(() => {
+  check("close event fired once", () => closed === 1 || closed);
+  check("close event sees the return value", () => returned === "done" || returned);
+  check("closed dialog takes no room", () => d.getBoundingClientRect().height === 0 || d.getBoundingClientRect().height);
+  check("open dialog is shown", () => document.getElementById("o").getBoundingClientRect().height > 0);
+  check("details content shown when open", () => document.getElementById("dc").getBoundingClientRect().height > 0);
+  e.removeAttribute("open");
+  setTimeout(() => {
+    check("details content hidden when closed", () => document.getElementById("dc").getBoundingClientRect().height === 0 || document.getElementById("dc").getBoundingClientRect().height);
+    console.log("DONE");
+  }, 100);
+}, 200));
+</script></body></html>

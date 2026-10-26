@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html><head><title>crypto random values</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("crypto exists", () => typeof crypto === "object" && typeof crypto.getRandomValues === "function");
+check("getRandomValues returns its array", () => { const a = new Uint32Array(4); return crypto.getRandomValues(a) === a; });
+check("values are not all zero", () => { const a = new Uint32Array(8); crypto.getRandomValues(a); return a.some((v) => v !== 0); });
+check("two fills differ", () => { const a = new Uint8Array(16), b = new Uint8Array(16); crypto.getRandomValues(a); crypto.getRandomValues(b); return a.join() !== b.join(); });
+check("large fill", () => { const a = new Uint8Array(1000); crypto.getRandomValues(a); let n = 0; for (const v of a) if (v === 0) n++; return n < 50 || n; });
+check("offset view only touches its range", () => { const buf = new Uint8Array(12); crypto.getRandomValues(new Uint8Array(buf.buffer, 4, 4)); return (buf[0] | buf[1] | buf[2] | buf[3] | buf[8] | buf[9] | buf[10] | buf[11]) === 0; });
+check("bigint arrays", () => { const a = new BigUint64Array(2); crypto.getRandomValues(a); return typeof a[0] === "bigint"; });
+check("float array rejected", () => { try { crypto.getRandomValues(new Float32Array(1)); return "no throw"; } catch (e) { return e.name === "TypeMismatchError" || e.name; } });
+check("over the quota rejected", () => { try { crypto.getRandomValues(new Uint8Array(65537)); return "no throw"; } catch (e) { return e.name === "QuotaExceededError" || e.name; } });
+check("randomUUID shape", () => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(crypto.randomUUID()));
+check("randomUUID differs", () => crypto.randomUUID() !== crypto.randomUUID());
+check("window.crypto", () => window.crypto === crypto);
+console.log("DONE");
+</script></body></html>

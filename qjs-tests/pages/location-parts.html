@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><title>location parts</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const eq = (a, b) => a === b ? true : JSON.stringify(a) + " != " + JSON.stringify(b);
+const L = window.location;
+check("a page with no port in its address has an empty one", () => "port" in L);
+check("protocol ends in a colon", () => /^[a-z]+:$/.test(L.protocol) || L.protocol);
+check("host has the port when there is one", () => eq(L.host, L.port ? L.hostname + ":" + L.port : L.hostname));
+check("port is empty or digits", () => /^\d*$/.test(L.port) || L.port);
+check("origin", () => L.protocol === "file:" || eq(L.origin, L.protocol + "//" + L.host));
+check("search is empty or has the question mark", () => L.search === "" || L.search[0] === "?" || L.search);
+check("hash is empty or has the hash", () => L.hash === "" || L.hash[0] === "#" || L.hash);
+check("parts rebuild the href", () => eq(L.protocol + "//" + L.host + L.pathname + L.search + L.hash, L.href));
+check("new URL from the origin pieces", () => new URL(L.protocol + "//" + L.hostname + (L.port ? ":" + L.port : "")).host === L.host || "bad");
+console.log("DONE");
+</script></body></html>

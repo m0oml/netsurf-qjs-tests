@@ -34,6 +34,9 @@ check("Intl.PluralRules", () => eq(new Intl.PluralRules("en").select(1) + new In
 check("Intl.RelativeTimeFormat", () => eq(new Intl.RelativeTimeFormat("en").format(-3, "days"), "3 days ago"));
 check("Intl.ListFormat", () => eq(new Intl.ListFormat("en").format(["a", "b", "c"]), "a, b and c"));
 check("Intl.DateTimeFormat", () => typeof new Intl.DateTimeFormat("en-GB").format(new Date(0)) === "string");
+check("Intl formatters without new", () => eq(Intl.NumberFormat("en-GB").format(1234.5), "1,234.5") && typeof Intl.DateTimeFormat("en-GB").format(new Date(0)) === "string" && eq(["b", "a"].sort(Intl.Collator().compare).join(), "a,b"));
+check("Intl.PluralRules needs new", () => { try { Intl.PluralRules("en"); return false; } catch (e) { return e instanceof TypeError; } });
+check("Intl.DateTimeFormat instanceof", () => new Intl.DateTimeFormat("en") instanceof Intl.DateTimeFormat);
 check("MessageChannel", () => typeof new MessageChannel().port1.postMessage === "function");
 const channel = new MessageChannel();
 const received = [];

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html><head><title>bogus comments from the HTML parser</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const parse = (html) => { const t = document.createElement("template"); t.innerHTML = html; return t.content; };
+const describe = (node) => Array.from(node.childNodes, (n) => n.nodeType === 8 ? "#" + n.data : n.nodeType === 3 ? "'" + n.data + "'" : n.nodeName).join("|");
+check("processing instruction syntax is a comment", () => describe(parse("<div><?lit$1$></div>").firstChild) === "#?lit$1$" || describe(parse("<div><?lit$1$></div>").firstChild));
+check("question mark comment between text", () => describe(parse("a<?x>b")) === "'a'|#?x|'b'" || describe(parse("a<?x>b")));
+check("element with a bound attribute and a marker", () => { const f = parse("<p class$lit$='x'><?m></p>"); const p = f.firstChild; return (p.getAttribute("class$lit$") === "x" && describe(p) === "#?m") || describe(p); });
+check("comment syntax", () => describe(parse("<!--a--><b></b>")) === "#a|B" || describe(parse("<!--a--><b></b>")));
+check("close tag with junk is a comment", () => describe(parse("a</ 1>b")) === "'a'|# 1|'b'" || describe(parse("a</ 1>b")));
+check("a leading comment keeps the rest", () => describe(parse("<!--a-->x<b></b>")) === "#a|'x'|B" || describe(parse("<!--a-->x<b></b>")));
+check("only a comment", () => describe(parse("<!--a-->")) === "#a" || describe(parse("<!--a-->")));
+check("innerHTML of an element starting with a comment", () => { const d = document.createElement("div"); d.innerHTML = "old"; d.innerHTML = "<!--a--><i>t</i>"; return describe(d) === "#a|I" || describe(d); });
+check("bang declaration is a comment", () => describe(parse("<!x>")) === "#x" || describe(parse("<!x>")));
+check("walker sees markers", () => { const f = parse("<div><?m></div><span></span>"); const w = document.createTreeWalker(f, 129); const out = []; let n; while ((n = w.nextNode())) out.push(n.nodeType === 8 ? "#" : n.nodeName); return out.join(",") === "DIV,#,SPAN" || out.join(","); });
+console.log("DONE");
+</script></body></html>

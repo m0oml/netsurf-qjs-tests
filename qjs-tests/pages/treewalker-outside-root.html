@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html><head><title>tree walker current node outside its root</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const t = document.createElement("template");
+t.innerHTML = "<div id='a'><span id='b'></span><!--c--></div><p id='d'></p>";
+const imported = document.importNode(t.content, true);
+const w = document.createTreeWalker(document, 129);
+w.currentNode = imported;
+const seen = [];
+let n;
+while ((n = w.nextNode()) !== null) seen.push(n.nodeType === 8 ? "#" + n.data : n.id);
+check("walks a fragment outside the root", () => seen.join(",") === "a,b,#c,d" || seen.join(","));
+check("current node is the last one", () => w.currentNode.id === "d" || w.currentNode.id);
+const w2 = document.createTreeWalker(imported, 129);
+const seen2 = [];
+while ((n = w2.nextNode()) !== null) seen2.push(n.nodeType === 8 ? "#" + n.data : n.id);
+check("walks a fragment as the root", () => seen2.join(",") === "a,b,#c,d" || seen2.join(","));
+const w3 = document.createTreeWalker(document.body, 1);
+w3.currentNode = imported.firstChild;
+check("nextNode from outside the root", () => (w3.nextNode() || {}).id === "b" || "no node");
+check("previousNode from outside the root", () => { w3.currentNode = imported.lastChild; const p = w3.previousNode(); return (p && p.id) === "b" || (p && p.id); });
+console.log("DONE");
+</script></body></html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><title>flex automatic minimum size and a specified width</title>
+<style>
+body { margin: 0; }
+.row { display: flex; width: 400px; }
+.wide { width: 900px; height: 10px; }
+#a { width: 100%; }
+#b { }
+#c { width: 300px; }
+#d { width: 100%; overflow: hidden; }
+#e { width: 50%; min-width: 0; }
+</style></head><body>
+<div class="row"><div id="a"><div class="wide"></div></div></div>
+<div class="row"><div id="b"><div class="wide"></div></div></div>
+<div class="row"><div id="c"><div class="wide"></div></div></div>
+<div class="row"><div id="d"><div class="wide"></div></div></div>
+<div class="row"><div id="e"><div class="wide"></div></div></div>
+<div class="row"><div id="f" style="width: 100%"><div class="wide"></div></div><div id="g" style="width: 100%"><div class="wide"></div></div></div>
+<div class="row"><div id="h" style="min-width: 0"><div class="wide"></div></div></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const w = (id) => document.getElementById(id).getBoundingClientRect().width;
+window.addEventListener("load", () => setTimeout(() => {
+  check("a definite width limits the automatic minimum", () => w("a") === 400 || w("a"));
+  check("without a width the content is the minimum", () => w("b") === 900 || w("b"));
+  check("a smaller definite width is the minimum", () => w("c") === 300 || w("c"));
+  check("a scroll container may shrink to nothing", () => w("d") === 400 || w("d"));
+  check("min-width 0", () => w("e") === 200 || w("e"));
+  check("two 100% items cannot go below their width", () => w("f") === 400 && w("g") === 400 || w("f") + "," + w("g"));
+  check("min-width 0 and no width shrinks to the container", () => w("h") === 400 || w("h"));
+  console.log("DONE");
+}, 200));
+</script></body></html>

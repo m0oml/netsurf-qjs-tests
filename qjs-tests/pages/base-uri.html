@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head><title>document base URL</title>
+<base target="_blank">
+<base href="https://example.com/dir/">
+</head><body>
+<a id="rel" href="page.html">r</a><a id="abs" href="https://other.org/x">a</a><a id="up" href="../up">u</a>
+<div id="many"></div>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("baseURI uses the first base with an href", () => document.baseURI === "https://example.com/dir/" || document.baseURI);
+check("relative link resolves against it", () => document.getElementById("rel").href === "https://example.com/dir/page.html" || document.getElementById("rel").href);
+check("absolute link stays", () => document.getElementById("abs").href === "https://other.org/x");
+check("dot dot", () => document.getElementById("up").href === "https://example.com/up" || document.getElementById("up").href);
+check("element baseURI", () => document.getElementById("rel").baseURI === "https://example.com/dir/");
+check("no base falls back to the document URL", () => {
+  const d = document.implementation.createHTMLDocument("t");
+  return d.baseURI === d.URL || d.baseURI;
+});
+check("a base added later is used", () => {
+  const b = document.createElement("base");
+  b.setAttribute("href", "https://late.example/");
+  document.head.insertBefore(b, document.head.firstChild);
+  const r = document.getElementById("rel").href;
+  b.remove();
+  return r === "https://late.example/page.html" || r;
+});
+check("many URL reads on a big page are quick", () => {
+  const many = document.getElementById("many");
+  let html = "";
+  for (let i = 0; i < 300; i++) html += '<p><a href="n' + i + '">x</a></p>';
+  many.innerHTML = html;
+  const start = Date.now();
+  let n = 0;
+  for (const a of many.getElementsByTagName("a")) { if (a.href.indexOf("https://example.com/dir/n") === 0) n++; }
+  const took = Date.now() - start;
+  return (n === 300 && took < 5000) || ("n=" + n + " took " + took);
+});
+console.log("DONE");
+</script></body></html>

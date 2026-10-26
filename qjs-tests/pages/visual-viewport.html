@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>visualViewport</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("exists", () => typeof window.visualViewport === "object" && visualViewport !== null);
+check("scale is 1", () => visualViewport.scale === 1);
+check("size is the window's", () => visualViewport.width === window.innerWidth && visualViewport.height === window.innerHeight || [visualViewport.width, window.innerWidth, visualViewport.height, window.innerHeight].join());
+check("offsets are zero", () => visualViewport.offsetLeft === 0 && visualViewport.offsetTop === 0);
+check("is an event target", () => { let n = 0; visualViewport.addEventListener("resize", () => n++); visualViewport.dispatchEvent(new Event("resize")); return n === 1 || n; });
+check("interface", () => visualViewport instanceof VisualViewport && visualViewport instanceof EventTarget);
+console.log("DONE");
+</script></body></html>

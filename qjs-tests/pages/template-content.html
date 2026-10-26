@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><title>template content identity</title></head><body>
+<template id="t"><div id="a"><b>x</b></div></template>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+const t = document.getElementById("t");
+check("content is the same fragment each time", () => t.content === t.content);
+check("content holds the markup", () => t.content.firstElementChild.id === "a");
+check("changes to content stay", () => { t.content.firstElementChild.setAttribute("data-k", "v"); return t.content.firstElementChild.getAttribute("data-k") === "v"; });
+check("importNode copies the changed content", () => document.importNode(t.content, true).firstElementChild.getAttribute("data-k") === "v");
+check("markers added to content are cloned", () => {
+  const u = document.createElement("template");
+  u.innerHTML = "<p>a</p><p>b</p>";
+  const c = u.content;
+  c.firstChild.append(document.createComment(""));
+  const copy = document.importNode(u.content, true);
+  return copy.firstChild.childNodes.length === 2 || copy.firstChild.childNodes.length;
+});
+check("setting innerHTML gives new content", () => {
+  const u = document.createElement("template");
+  u.innerHTML = "<i>1</i>";
+  const first = u.content;
+  u.innerHTML = "<i>2</i><i>3</i>";
+  return (u.content !== first && u.content.children.length === 2 && first.children.length === 1) || u.content.children.length;
+});
+check("content is not the template's child", () => t.content.firstElementChild !== t.firstElementChild);
+check("template innerHTML still reads", () => t.innerHTML.indexOf("<b>x</b>") >= 0 || t.innerHTML);
+check("cloned template has content", () => t.cloneNode(true).content.firstElementChild.id === "a");
+console.log("DONE");
+</script></body></html>

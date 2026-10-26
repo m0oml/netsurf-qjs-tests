@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>document.currentScript</title></head><body>
+<script>
+function check(name, fn) {
+  try { var r = fn(); console.log((r === true ? "PASS " : "FAIL ") + name + (r === true ? "" : " got " + r)); }
+  catch (e) { console.log("FAIL " + name + " threw " + e); }
+}
+check("inline script sees itself", () => document.currentScript !== null && document.currentScript.tagName === "SCRIPT" && document.currentScript.textContent.includes("sees itself"));
+check("PromiseRejectionEvent exists", () => { const p = Promise.resolve(); const e = new PromiseRejectionEvent("unhandledrejection", { promise: p, reason: 3 }); return e.promise === p && e.reason === 3 && e instanceof Event; });
+check("measure from a legacy timing name", () => performance.measure("m", "navigationStart").startTime === 0);
+window.addEventListener("load", () => {
+  check("null outside a script", () => document.currentScript === null);
+  const s = document.createElement("script");
+  s.src = "current-script.js";
+  setTimeout(() => {
+    check("late external script sees itself", () => window.__cs === s);
+    check("null again afterwards", () => document.currentScript === null);
+    console.log("DONE");
+  }, 500);
+  document.body.appendChild(s);
+});
+</script></body></html>
